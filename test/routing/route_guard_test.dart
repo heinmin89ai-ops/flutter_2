@@ -102,6 +102,17 @@ void main() {
       );
     });
 
+    test('both roles may open the till', () {
+      // `pos` is the one capability a cashier is *supposed* to have, so the
+      // interesting assertion here is that the route exists in the map at all —
+      // a route with no entry is reachable by URL but unprotected by intent.
+      // Neither role can be used to prove a denial, which is why this is stated
+      // as an ownership fact rather than tested via a rejected role.
+      expect(appGuard(licensed, user(UserRole.admin), AppRoutes.pos), isNull);
+      expect(appGuard(licensed, user(UserRole.cashier), AppRoutes.pos), isNull);
+      expect(roleHasPermission(UserRole.cashier, Permission.pos), isTrue);
+    });
+
     test('a signed-in user is pulled off every non-feature bookmark', () {
       final owner = user(UserRole.admin);
 
@@ -119,6 +130,7 @@ void main() {
       AppRoutes.inventory,
       AppRoutes.addMedicine,
       AppRoutes.addPurchase,
+      AppRoutes.pos,
     ]);
     expect(kRoutePermissions[AppRoutes.inventory], Permission.viewInventory);
     expect(
@@ -129,6 +141,7 @@ void main() {
       kRoutePermissions[AppRoutes.addPurchase],
       Permission.managePurchases,
     );
+    expect(kRoutePermissions[AppRoutes.pos], Permission.pos);
   });
 
   test('no permission is both implied and contradicted by a route entry', () {

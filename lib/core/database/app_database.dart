@@ -1,11 +1,14 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import 'tables/customers.dart';
 import 'tables/license_config.dart';
 import 'tables/medicines.dart';
 import 'tables/medicine_batches.dart';
 import 'tables/purchase_items.dart';
 import 'tables/purchases.dart';
+import 'tables/sale_items.dart';
+import 'tables/sales.dart';
 import 'tables/suppliers.dart';
 import 'tables/unit_conversions.dart';
 import 'tables/users.dart';
@@ -18,20 +21,20 @@ part 'app_database.g.dart';
 /// [migration]. Never rewrite an already-released step: a device that skips a
 /// migration cannot be repaired without a Phase 8 cloud restore, which does not
 /// exist yet.
-const int kSchemaVersion = 2;
+const int kSchemaVersion = 3;
 
 /// Highest schema version with a defined `onUpgrade` step.
 ///
 /// Kept separate from [kSchemaVersion] so that bumping the version without
 /// writing the migration is a loud failure at runtime rather than a device
 /// booting against a stale schema. Update both together when releasing a phase.
-const int kHighestDefinedMigration = 2;
+const int kHighestDefinedMigration = 3;
 
 /// Offline-first pharmacy database.
 ///
-/// Phase 1 registered [Users] and [LicenseConfig]; Phase 3 adds the inventory
-/// and purchasing tables. Remaining modules add their tables in later phases and
-/// bump [kSchemaVersion].
+/// Phase 1 registered [Users] and [LicenseConfig]; Phase 3 added the inventory
+/// and purchasing tables; Phase 4 adds the sales side. Remaining modules add
+/// their tables in later phases and bump [kSchemaVersion].
 @DriftDatabase(
   tables: [
     Users,
@@ -42,6 +45,10 @@ const int kHighestDefinedMigration = 2;
     Suppliers,
     Purchases,
     PurchaseItems,
+    Customers,
+    Sales,
+    SaleItems,
+    SaleBatches,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -65,6 +72,9 @@ class AppDatabase extends _$AppDatabase {
       // version must still land on the current schema.
       if (from < 2) {
         await _createPhase3Tables(m);
+      }
+      if (from < 3) {
+        await _createPhase4Tables(m);
       }
       // Anything beyond the defined steps must not boot against a stale schema.
       if (!_coversUpgrade(from, to)) {
@@ -110,6 +120,28 @@ class AppDatabase extends _$AppDatabase {
     await m.createIndex(idxPurchasesCreated);
     await m.createIndex(idxPurchaseItemsPurchase);
     await m.createIndex(idxPurchaseItemsMedicine);
+  }
+
+  /// Phase 4: sales, customers and the FEFO batch audit trail.
+  ///
+  /// Same explicit-index rule as [_createPhase3Tables]: `Migrator.createTable`
+  /// does not emit the `@TableIndex` entities, so a device upgrading from v2
+  /// would otherwise get the sales tables with none of their indexes — the exact
+  /// rows that grow fastest on a busy till. `migration_v2_to_v3_test.dart` pins
+  /// this too.
+  Future<void> _createPhase4Tables(Migrator m) async {
+    await m.createTable(customers);
+    await m.createTable(sales);
+    await m.createTable(saleItems);
+    await m.createTable(saleBatches);
+
+    await m.createIndex(idxCustomersName);
+    await m.createIndex(idxSalesCreated);
+    await m.createIndex(idxSalesCustomer);
+    await m.createIndex(idxSaleItemsSale);
+    await m.createIndex(idxSaleItemsMedicine);
+    await m.createIndex(idxSaleBatchAllocationsSale);
+    await m.createIndex(idxSaleBatchAllocationsBatch);
   }
 
   /// Whether every step between [from] (exclusive) and [to] (inclusive) exists.

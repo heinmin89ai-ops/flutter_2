@@ -12,6 +12,7 @@ import 'features/inventory/presentation/inventory_list_screen.dart';
 import 'features/license/application/license_providers.dart';
 import 'features/license/presentation/activation_key_screen.dart';
 import 'features/purchases/presentation/add_purchase_screen.dart';
+import 'features/sales/presentation/pos_screen.dart';
 import 'features/shell/presentation/dashboard_screen.dart';
 import 'routing/routes.dart';
 
@@ -96,6 +97,10 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.addPurchase,
         builder: (context, state) => const AddPurchaseScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.pos,
+        builder: (context, state) => const POSScreen(),
       ),
     ],
   );

@@ -29,6 +29,7 @@ dependencies:
 
   # Hashing primitives (PBKDF2 built on Hmac)
   crypto: ^3.0.7
+  pdf: ^3.13.1
 
 dev_dependencies:
   flutter_test:

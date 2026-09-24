@@ -70,6 +70,20 @@ class InventoryRow {
   }
 }
 
+/// A catalogue product with its unit hierarchy, for the POS grid.
+///
+/// The till prices each card off [hierarchy]'s base (or first) unit; a `null`
+/// hierarchy means the product has no valid units configured and cannot be sold,
+/// which the grid shows rather than hiding.
+class CatalogEntry {
+  const CatalogEntry({required this.medicine, this.hierarchy});
+
+  final Medicine medicine;
+  final UnitHierarchy? hierarchy;
+
+  bool get sellable => hierarchy != null;
+}
+
 /// A batch with its medicine's unit hierarchy resolved.
 class StockBatch {
   const StockBatch({
@@ -186,6 +200,25 @@ class InventoryRepository {
             ..where((t) => t.isActive.equals(true))
             ..orderBy([(t) => OrderingTerm(expression: t.tradeName)]))
           .get();
+
+  /// The active catalogue with each medicine's units resolved, in one pass.
+  ///
+  /// The POS grid needs a price and the unit list per product. Doing it row by
+  /// row through [hierarchyFor] would fire one `unit_conversions` query per
+  /// medicine on first paint — hundreds of queries on a real till — so this
+  /// reuses [_hierarchiesForAll]'s single grouped read. A medicine with no valid
+  /// units gets a `null` [CatalogEntry.hierarchy] and is shown as unpriced
+  /// rather than dropped: hiding a product a shop stocks is worse than showing
+  /// it without a price, which points the cashier at the configuration to fix.
+  Future<List<CatalogEntry>> catalogWithUnits() async {
+    final medicines = await catalog();
+    if (medicines.isEmpty) return const [];
+    final units = await _hierarchiesForAll();
+    return [
+      for (final medicine in medicines)
+        CatalogEntry(medicine: medicine, hierarchy: units[medicine.id]),
+    ];
+  }
 
   Future<Medicine?> medicineById(int id) => (_db.select(
     _db.medicines,

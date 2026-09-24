@@ -16,8 +16,10 @@ abstract final class AppRoutes {
   static const String addMedicine = '/inventory/add';
   static const String addPurchase = '/purchases/add';
 
+  // Phase 4 — point of sale.
+  static const String pos = '/pos';
+
   // Added in later phases:
-  // static const String pos = '/pos';               // Phase 4
   // static const String reports = '/reports';       // Phase 6
 }
 
@@ -34,4 +36,5 @@ const Map<String, Permission> kRoutePermissions = {
   AppRoutes.inventory: Permission.viewInventory,
   AppRoutes.addMedicine: Permission.manageInventory,
   AppRoutes.addPurchase: Permission.managePurchases,
+  AppRoutes.pos: Permission.pos,
 };

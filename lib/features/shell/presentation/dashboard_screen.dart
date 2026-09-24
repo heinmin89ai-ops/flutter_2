@@ -130,6 +130,12 @@ class _ModuleLinks extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final links = <Widget>[
+      if (ref.watch(permissionProvider(Permission.pos)))
+        _Link(
+          icon: Icons.point_of_sale,
+          label: 'Point of sale',
+          target: AppRoutes.pos,
+        ),
       if (ref.watch(permissionProvider(Permission.viewInventory)))
         _Link(
           icon: Icons.inventory_2_outlined,

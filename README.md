@@ -3,14 +3,15 @@
 Offline-first mobile pharmacy management system (retail & wholesale) for Android
 and iOS. Flutter · Riverpod · drift (SQLite).
 
-**Current status: Phase 3 — inventory and purchases.** Six tables (`medicines`,
-`unit_conversions`, `medicine_batches`, `suppliers`, `purchases`,
-`purchase_items`), the multi-unit hierarchy, dynamically computed batch stock,
-stock-in that creates batches in one transaction, supplier payables, and three
-screens. Schema 1 → 2 is this project's first real migration. Phase 1 delivered
-the folder structure, Drift setup, RBAC and the boot flow; Phase 2 made the
-activation key a signed JWT. POS, vouchers, credit, reporting and backup land in
-Phases 4–8.
+**Current status: Phase 4 — sales and POS.** Four more tables (`customers`,
+`sales`, `sale_items`, `sale_batch_allocations`) on top of Phase 3's six. The till
+now runs a cart with per-unit price switching and Retail/Wholesale, deducts stock
+by strict FEFO across batches in one transaction, records a batch-level audit
+trail for recalls, and renders a PDF voucher. Schema 2 → 3 is the second real
+migration. Phase 1 delivered the folder structure, Drift setup, RBAC and the boot
+flow; Phase 2 made the activation key a signed JWT; Phase 3 delivered inventory,
+multi-unit stock and purchasing. Returns, expenses, the credit ledger, reporting
+and backup land in Phases 5–8.
 
 ---
 
@@ -20,9 +21,9 @@ Phases 4–8.
 |---|---|---|
 | 1 | Architecture, Drift setup, `users` + `license_config`, RBAC, boot flow | `main` |
 | 2 | Signed licences: JWT verification, vendor key generator, expiry enforcement | `feature/phase-2-license-jwt` |
-| 3 | Inventory, multi-unit stock, batches and expiry alerts + stock-in, suppliers and payables (the spec's Modules 3 and 4) | this branch |
-| 4 | Sales & POS: FEFO deduction, search/scan, retail/wholesale, returns, voucher printing | awaiting approval of the spec's Phase 4 brief |
-| 5 onward | Stock adjustments (write-offs, transfers), expenses, credit, reporting, Drive backup | planned |
+| 3 | Inventory, multi-unit stock, batches and expiry alerts + stock-in, suppliers and payables (the spec's Modules 3 and 4) | `feature/phase-3-inventory-purchases` |
+| 4 | Sales & POS: FEFO deduction, search/scan, retail/wholesale, voucher printing (the spec's Module 5) | this branch |
+| 5 onward | Returns and stock adjustments (write-offs, transfers), expenses, credit ledger, reporting, Drive backup | awaiting approval of the spec's Phase 5 brief |
 
 The spec's Phase 2 brief (repositories, state management, boot flow, router
 redirects, activation and login screens) was already implemented in Phase 1, so
@@ -31,7 +32,9 @@ tooling. That renumbered the remaining roadmap by one. Purchases came forward
 into Phase 3 because stock cannot be created without a delivery: the batch table
 and the multi-unit rule are only testable end to end once something writes them.
 
-See [`docs/PHASE3_INVENTORY.md`](docs/PHASE3_INVENTORY.md) for the unit and money
+See [`docs/PHASE4_SALES.md`](docs/PHASE4_SALES.md) for the FEFO rule, the sale
+transaction and the printing/scanning deferrals,
+[`docs/PHASE3_INVENTORY.md`](docs/PHASE3_INVENTORY.md) for the unit and money
 rules and the migration lessons, [`docs/PHASE2_LICENSE.md`](docs/PHASE2_LICENSE.md)
 for the key format and its limits, and
 [`docs/PHASE1_ARCHITECTURE.md`](docs/PHASE1_ARCHITECTURE.md) for the architecture
@@ -124,16 +127,18 @@ stay free of Flutter imports so they are testable without a widget tree.
 Phase 3 added `features/inventory/` and `features/purchases/`. Two pieces are
 pure Dart with no drift or Flutter imports, because they decide what a customer
 actually receives: `unit_hierarchy.dart` (the packaging arithmetic and the
-smallest-unit rule) and `money.dart` (integer pya). The FEFO *allocator* is
-Phase 4's; what exists here is the ordering it will consume — `batchesFor`
-returns live batches soonest-expiry first.
+smallest-unit rule) and `money.dart` (integer pya). Phase 4 added
+`features/sales/`, whose FEFO allocator and cart controller follow the same rule —
+`fefo_allocator.dart` and `cart_controller.dart` are pure Dart and carry every
+decision about which batch a sale drains and what a line costs, so both are
+testable without a database or a widget tree.
 
 ---
 
 ## Testing
 
 ```bash
-flutter test                    # 243 cases
+flutter test                    # 299 cases
 flutter test --coverage         # lcov.info for CI
 python3 tools/license_generator.py --self-test   # 7 cases
 ```
@@ -165,6 +170,15 @@ Coverage is concentrated where the risk is:
 - `test/features/purchases/data/purchase_repository_test.dart` — stock-in
   creating batches, unit conversion at the boundary, repeated-batch merge with a
   blended cost, and the cached payable agreeing with `recalculatePayable`.
+- `test/features/sales/` — the FEFO allocator (single/cross-batch fills, blended
+  half-up cost, shortage naming the numbers), the cart (unit switching resets
+  quantity, retail/wholesale re-pricing, discount clamp), and `SaleRepository`
+  running a real sale against an in-memory database: batch deduction, the credit-
+  limit rollback, voucher uniqueness and the recall audit trail.
+- `test/core/database/migration_v2_to_v3_test.dart` — the schema 2 → 3 upgrade on
+  a hand-written Phase 3 (v2) fixture, asserting the four sales tables, all seven
+  new indexes, and that the `payment_type` CHECK and `voucher_no` UNIQUE bite on
+  the *migrated* file, which a fresh install never proves.
 - `test/routing/route_guard_test.dart` — the route permission map, and the real
   router pushed to a protected route by both roles.
 
@@ -194,24 +208,29 @@ Deliberate decisions, not oversights — each is recorded in the ADR:
   username minimum; enforcing a 6-character floor is `SetupAdminScreen`'s rule,
   and a raw 4-digit PIN remains weak against a copied database even at 120k
   PBKDF2 rounds.
-- **Thermal printing, barcode scanning and Drive backup are absent.** Hardware-
-  dependent, scheduled in Phases 6 and 8.
+- **ESC/POS transport, camera scanning and Drive backup are absent.** Phase 4
+  renders a voucher to PDF and reads a hardware (HID) barcode scanner through the
+  search box, both of which work offline with no new permission. Printing that PDF
+  to an actual thermal roll (ESC/POS, and a Unicode font for Burmese names) and the
+  `mobile_scanner` camera path are deferred to the on-device pass; Drive backup is
+  Phase 8.
 
 ---
 
-## Release checklist before Phase 4
+## Release checklist before Phase 5
 
 - [ ] Generate a real `PHARMACY_LICENSE_SECRET` and stop shipping the committed
       placeholder; the dashboard warns in debug builds until this is done.
 - [ ] Decide the renewal UX — re-entering a key on an activated device currently
       resets `activated_at`. Carried unresolved from Phase 2.
-- [ ] Choose the FEFO deduction rule at the till: strict (never sell a later
-      batch while an earlier one has stock) or allowed-with-override, and who may
-      override. Batch ordering is already what `batchesFor` returns.
-- [ ] Decide the `mobile_scanner` vs. Bluetooth-HID scanner input approach (affects
-      POS field focus handling in Phase 5).
-- [ ] Confirm 58mm vs 80mm printer models in the field; `blue_thermal_printer`
-      connection lifecycle is easier to get right if it is designed in early.
+- [x] FEFO deduction rule — decided in Phase 4 as **strict**, no till override in
+      any role; bad stock is removed with a Phase 5 write-off instead.
+- [x] Scanner input approach — decided in Phase 4: HID/USB barcode guns are
+      keyboards handled by the POS search field's submit path; the `mobile_scanner`
+      camera path is deferred to the on-device pass.
+- [ ] Wire the on-device printing pass: ESC/POS transport to the 58/80 mm roll plus
+      a bundled Unicode font so Burmese shop and product names render. Confirm the
+      printer models in the field before choosing the transport library.
 - [ ] Agree the backup-restore contract now: Phase 8 must be able to restore a
       Phase 1 database, so the schema-version field belongs in the backup header
       from the first release.
