@@ -1,121 +1,197 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import 'core/database/app_database.dart';
+import 'core/rbac/permission.dart';
+import 'features/auth/application/auth_providers.dart';
+import 'features/auth/presentation/login_screen.dart';
+import 'features/auth/presentation/setup_admin_screen.dart';
+import 'features/license/application/license_providers.dart';
+import 'features/license/presentation/activation_key_screen.dart';
+import 'routing/routes.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const ProviderScope(child: PharmacyApp()));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class PharmacyApp extends ConsumerWidget {
+  const PharmacyApp({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MaterialApp.router(
+      title: 'Pharmacy POS',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorSchemeSeed: const Color(0xFF0F766E),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+/// Re-evaluates the boot / licence / auth gates whenever their inputs change.
+///
+/// Riverpod state is not a [Listenable], so this bridges the two providers the
+/// guards depend on into one notifier the router can subscribe to.
+class _RouterRefresh extends ChangeNotifier {
+  _RouterRefresh(this._ref) {
+    _ref
+      ..listen<LicenseState>(licenseProvider, (_, _) => notifyListeners())
+      ..listen<AppUser?>(authProvider, (_, _) => notifyListeners());
+  }
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  final Ref _ref;
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+final Provider<GoRouter> routerProvider = Provider<GoRouter>((ref) {
+  final refresh = _RouterRefresh(ref);
+  ref.onDispose(refresh.dispose);
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  return GoRouter(
+    initialLocation: AppRoutes.boot,
+    refreshListenable: refresh,
+    redirect: (context, state) => _guard(ref, state.matchedLocation),
+    routes: [
+      GoRoute(
+        path: AppRoutes.boot,
+        builder: (context, state) => const BootGate(),
+      ),
+      GoRoute(
+        path: AppRoutes.activate,
+        builder: (context, state) => const ActivationKeyScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.setupAdmin,
+        builder: (context, state) => const SetupAdminScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.login,
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.home,
+        builder: (context, state) => const PhaseOneHome(),
+      ),
+    ],
+  );
+});
+
+/// Module 1 → Module 2 boot flow.
+///
+/// `license_config` empty ⇒ activation screen. Present and decodable ⇒ login.
+/// Signed in ⇒ home. `read`, never `watch`: this runs inside a redirect and must
+/// not subscribe the router to anything.
+String? _guard(Ref ref, String here) {
+  final license = ref.read(licenseProvider);
+
+  // Bootstrap has not answered yet; hold on the splash.
+  if (license.status == LicenseStatus.unknown) return AppRoutes.boot;
+
+  if (!license.isActivated) {
+    return here == AppRoutes.activate ? null : AppRoutes.activate;
+  }
+
+  final user = ref.read(authProvider);
+  if (user != null) {
+    return here == AppRoutes.home ? null : AppRoutes.home;
+  }
+
+  // Licence is valid but nobody is signed in. The setup screen is the only
+  // place allowed to sit outside that; BootGate routes into it.
+  return here == AppRoutes.setupAdmin ? AppRoutes.setupAdmin : AppRoutes.login;
+}
+
+/// Startup screen: loads the licence and restores any saved session, then lets
+/// [_guard] advance the app.
+class BootGate extends ConsumerStatefulWidget {
+  const BootGate({super.key});
+
+  @override
+  ConsumerState<BootGate> createState() => _BootGateState();
+}
+
+class _BootGateState extends ConsumerState<BootGate> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
+  }
+
+  Future<void> _bootstrap() async {
+    final license = ref.read(licenseProvider.notifier);
+    await license.load();
+    if (!mounted) return;
+
+    if (!ref.read(licenseProvider).isActivated) return; // guard routes onward
+
+    await ref.read(authProvider.notifier).restoreSession();
+    if (!mounted) return;
+    if (ref.read(authProvider) != null) return;
+
+    // Fresh install: no account exists, so there is nothing to log into.
+    final users = await ref.read(userRepositoryProvider).findAll();
+    if (!mounted) return;
+    if (users.isEmpty) context.go(AppRoutes.setupAdmin);
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+  }
+}
+
+/// Placeholder landing screen for Phase 1.
+///
+/// The real navigation shell arrives with inventory (Phase 2) and POS (Phase 4);
+/// building it now would only have to be moved.
+class PhaseOneHome extends ConsumerWidget {
+  const PhaseOneHome({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authProvider);
+    final license = ref.watch(licenseProvider);
+    final maySeeCost = ref.watch(permissionProvider(Permission.viewCostPrice));
+
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Pharmacy POS'),
+        actions: [
+          IconButton(
+            tooltip: 'Sign out',
+            onPressed: () => ref.read(authProvider.notifier).signOut(),
+            icon: const Icon(Icons.logout),
+          ),
+        ],
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'Signed in as ${user?.username ?? '—'}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 4),
+              Text('Role: ${user?.role.name ?? '—'}'),
+              const SizedBox(height: 20),
+              Text(
+                'Phase 1 — foundation\n\n'
+                'Licence status: ${license.status.name}\n'
+                'Licensed modules: ${license.features.keys.join(', ')}\n'
+                'Cost prices visible: $maySeeCost',
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }

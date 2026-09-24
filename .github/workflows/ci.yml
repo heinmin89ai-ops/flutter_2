@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  push:
+    branches: [main, 'feature/**']
+  pull_request:
+
+jobs:
+  analyze-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.5
+
+      - name: Cache pub and build_runner artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('pubspec.lock') }}
+
+      - run: flutter pub get
+
+      # Fails if lib/core/database/app_database.g.dart is out of sync with the
+      # table definitions. Without this, a stale generated file can merge and
+      # only break on a device, because the file is committed.
+      - name: Regenerate code and assert no drift
+        run: |
+          dart run build_runner build
+          git diff --exit-code -- '*.g.dart' || {
+            echo "::error::Generated code is out of date. Run: dart run build_runner build"
+            exit 1
+          }
+
+      - run: dart format --output=none --set-exit-if-changed lib test
+
+      - run: flutter analyze --fatal-infos
+
+      - run: flutter test
