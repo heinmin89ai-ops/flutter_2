@@ -19,8 +19,12 @@ abstract final class AppRoutes {
   // Phase 4 — point of sale.
   static const String pos = '/pos';
 
-  // Added in later phases:
-  // static const String reports = '/reports';       // Phase 6
+  // Phase 5 — credit, expenses, reporting, backup.
+  static const String customerCredit = '/credit/customers';
+  static const String supplierCredit = '/credit/suppliers';
+  static const String expenses = '/expenses';
+  static const String reports = '/reports';
+  static const String backup = '/backup';
 }
 
 /// The permission each feature route requires, at the exact level of what it does.
@@ -37,4 +41,9 @@ const Map<String, Permission> kRoutePermissions = {
   AppRoutes.addMedicine: Permission.manageInventory,
   AppRoutes.addPurchase: Permission.managePurchases,
   AppRoutes.pos: Permission.pos,
+  AppRoutes.customerCredit: Permission.manageCredit,
+  AppRoutes.supplierCredit: Permission.manageCredit,
+  AppRoutes.expenses: Permission.manageExpenses,
+  AppRoutes.reports: Permission.viewProfitReports,
+  AppRoutes.backup: Permission.manageBackup,
 };

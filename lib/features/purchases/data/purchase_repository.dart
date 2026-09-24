@@ -1,7 +1,9 @@
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/database/tables/credit_transactions.dart';
 import '../../../core/money.dart';
+import '../../credit/application/ledger_service.dart';
 import '../../inventory/data/inventory_repository.dart';
 
 /// One line of a stock-in, as entered on the form.
@@ -90,9 +92,10 @@ class PurchaseReceipt {
 /// transaction. There is no way to record a purchase that leaves stock and debt
 /// disagreeing.
 class PurchaseRepository {
-  PurchaseRepository(this._db);
+  PurchaseRepository(this._db) : _ledger = LedgerService(_db);
 
   final AppDatabase _db;
+  final LedgerService _ledger;
 
   // --------------------------------------------------------------- suppliers
 
@@ -144,13 +147,21 @@ class PurchaseRepository {
 
   /// Record a supplier payment against their account.
   ///
-  /// Reduces [Supplier.currentPayable]. Refuses to overpay: a negative payable
-  /// would mean the shop is owed money by a supplier, which is a different
-  /// business fact and belongs in Phase 7's credit module, not here.
+  /// Reduces [Supplier.currentPayable] *and* appends a `payment_received` row to
+  /// the credit ledger in the same transaction, so
+  /// [recalculatePayable] can rebuild the payable from the ledger alone. Before
+  /// Phase 5 a supplier payment subtracted from the column and left no trace —
+  /// the same gap the customer side had (see `docs/PHASE4_SALES.md`).
+  ///
+  /// Refuses to overpay: a negative payable would mean the shop is owed money by
+  /// a supplier, which is a different business fact and belongs in Phase 7's
+  /// credit module, not here.
   Future<void> recordSupplierPayment({
     required int supplierId,
     required Pya amountPya,
+    int? recordedByUserId,
     String? note,
+    DateTime? at,
   }) async {
     if (amountPya <= 0) {
       throw const PurchaseRejectException('Payment must be greater than zero.');
@@ -170,11 +181,21 @@ class PurchaseRepository {
           currentPayable: Value(supplier.currentPayable - amountPya),
         ),
       );
-      // `note` is accepted for UI symmetry but not persisted: there is no
-      // payments table in the blueprint. Phase 7's credit module owns that
-      // history; inventing a side table here would fork the payable ledger.
+      await _ledger.postPayment(
+        partyType: PartyType.supplier,
+        partyId: supplierId,
+        amountPya: amountPya,
+        recordedByUserId: recordedByUserId,
+        note: note,
+        at: at,
+      );
     });
   }
+
+  /// Every ledger row for [supplierId], oldest first — the payable statement
+  /// screen's feed (Module 6).
+  Future<List<CreditTransaction>> supplierLedger(int supplierId) =>
+      _ledger.entriesFor(partyType: PartyType.supplier, partyId: supplierId);
 
   // ---------------------------------------------------------------- purchases
 
@@ -292,6 +313,17 @@ class PurchaseRepository {
             currentPayable: Value(supplier.currentPayable + owed),
           ),
         );
+        // Post the payable's opening entry to the ledger, linked to this invoice,
+        // so `recalculatePayable` can rebuild the column from ledger rows and a
+        // later write-off can find the exact document to reverse.
+        await _ledger.postDebt(
+          partyType: PartyType.supplier,
+          partyId: supplierId,
+          amountPya: owed,
+          purchaseId: purchaseId,
+          recordedByUserId: enteredByUserId,
+          at: now,
+        );
       }
     });
 
@@ -349,34 +381,23 @@ class PurchaseRepository {
             ]))
           .get();
 
-  /// Rebuilds every supplier's payable from the purchases table.
+  /// Rebuilds every supplier's payable from the `credit_transactions` ledger.
   ///
-  /// The column is denormalised for a fast payable list, which means a bug can
-  /// make it lie. This is the repair path, and the test suite uses it as the
-  /// oracle for "the cached figure equals the true one".
+  /// `current_payable` is a materialisation of `SUM(debt_added) −
+  /// SUM(payment_received)` per supplier, and — with Phase 5's ledger now written
+  /// by both [recordPurchase] and [recordSupplierPayment] — that sum *is* the
+  /// true balance. Before the ledger existed (Phase 4) a payment reduced the
+  /// column without leaving a row, so this oracle had to sum the purchase headers
+  /// only and could not survive an interim payment; it is now a genuine
+  /// recomputation and the test oracle for "the cached figure equals the true
+  /// one". A device upgrading from Phase 4 gets equivalent rows backfilled by the
+  /// v3→4 migration, so its old payments are visible here too.
   Future<void> recalculatePayable() async {
-    // One expression, held in a variable: `TypedResult.read` matches the
-    // expression that was passed to `addColumns`, so building a second
-    // equivalent object here would read nothing.
-    final owedExpr =
-        _db.purchases.totalAmount.sum() - _db.purchases.paidAmount.sum();
-    final rows =
-        await (_db.selectOnly(_db.purchases)
-              ..addColumns([_db.purchases.supplierId, owedExpr])
-              ..groupBy([_db.purchases.supplierId]))
-            .get();
-
-    // A group always has at least one row and both columns are NOT NULL, so the
-    // sum cannot be null here.
-    final owed = <int, Pya>{
-      for (final row in rows)
-        row.read(_db.purchases.supplierId)!: row.read(owedExpr)!,
-    };
-
+    final ledger = await _ledger.balancesByParty(PartyType.supplier);
     await _db.transaction(() async {
       final suppliers = await _db.select(_db.suppliers).get();
       for (final supplier in suppliers) {
-        final target = owed[supplier.id] ?? 0;
+        final target = ledger[supplier.id] ?? 0;
         if (target == supplier.currentPayable) continue;
         await (_db.update(_db.suppliers)
               ..where((t) => t.id.equals(supplier.id)))

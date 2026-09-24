@@ -3,15 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/database/app_database.dart';
+import 'core/database/tables/credit_transactions.dart';
 import 'core/rbac/permission.dart';
 import 'features/auth/application/auth_providers.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/auth/presentation/setup_admin_screen.dart';
+import 'features/backup/presentation/backup_screen.dart';
+import 'features/credit/presentation/party_credit_screen.dart';
+import 'features/expenses/presentation/expense_screen.dart';
 import 'features/inventory/presentation/add_medicine_screen.dart';
 import 'features/inventory/presentation/inventory_list_screen.dart';
 import 'features/license/application/license_providers.dart';
 import 'features/license/presentation/activation_key_screen.dart';
 import 'features/purchases/presentation/add_purchase_screen.dart';
+import 'features/reports/presentation/report_dashboard_screen.dart';
 import 'features/sales/presentation/pos_screen.dart';
 import 'features/shell/presentation/dashboard_screen.dart';
 import 'routing/routes.dart';
@@ -101,6 +106,28 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.pos,
         builder: (context, state) => const POSScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.customerCredit,
+        builder: (context, state) =>
+            const PartyCreditScreen(partyType: PartyType.customer),
+      ),
+      GoRoute(
+        path: AppRoutes.supplierCredit,
+        builder: (context, state) =>
+            const PartyCreditScreen(partyType: PartyType.supplier),
+      ),
+      GoRoute(
+        path: AppRoutes.expenses,
+        builder: (context, state) => const ExpenseScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.reports,
+        builder: (context, state) => const ReportDashboardScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.backup,
+        builder: (context, state) => const BackupScreen(),
       ),
     ],
   );

@@ -113,6 +113,11 @@ void main() {
         // Not `sale_batches`: the Dart class name's plural would be that, and
         // the table overrides it — this fixture asserts the real SQL name.
         'sale_batch_allocations',
+        // Opening the v2 file now runs the *whole* chain to kSchemaVersion (4),
+        // not just v3, so Phase 5's two tables land here too. Their own upgrade
+        // is pinned by migration_v3_to_v4_test.dart; this is the table set.
+        'credit_transactions',
+        'expenses',
       ]),
     );
     await db.close();

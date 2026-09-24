@@ -3,15 +3,19 @@
 Offline-first mobile pharmacy management system (retail & wholesale) for Android
 and iOS. Flutter · Riverpod · drift (SQLite).
 
-**Current status: Phase 4 — sales and POS.** Four more tables (`customers`,
-`sales`, `sale_items`, `sale_batch_allocations`) on top of Phase 3's six. The till
-now runs a cart with per-unit price switching and Retail/Wholesale, deducts stock
-by strict FEFO across batches in one transaction, records a batch-level audit
-trail for recalls, and renders a PDF voucher. Schema 2 → 3 is the second real
-migration. Phase 1 delivered the folder structure, Drift setup, RBAC and the boot
-flow; Phase 2 made the activation key a signed JWT; Phase 3 delivered inventory,
-multi-unit stock and purchasing. Returns, expenses, the credit ledger, reporting
-and backup land in Phases 5–8.
+**Current status: Phase 5 — credit ledgers, expenses, daily reports and encrypted
+backups.** Two more tables (`credit_transactions`, `expenses`) on top of Phase 4's
+twelve, and schema 3 → 4 — the first migration that *rewrites* data, backfilling
+the ledger from the balances a Phase 4 device already carries. Payments are now
+rows, not silent subtractions, so `current_debt` / `current_payable` are a genuine
+`SUM(debt_added) − SUM(payment_received)` and Phase 4's repair-oracle blind spot is
+gone. Expenses make a real net profit (sales − COGS − expenses) computable; one
+Admin-only dashboard reports today's trading with low-stock and 60-day-expiry
+alerts; and the database exports and restores as a passphrase-encrypted,
+versioned `.pbak` file (AES-256-GCM over PBKDF2). Google Drive upload is deferred
+— the encrypted file is the transport-neutral artifact a Drive adapter wraps
+later. Phases 1–4 delivered the foundation, signed licences, inventory and
+purchasing, and sales/POS. Returns and stock write-offs land in Phase 6.
 
 ---
 
@@ -22,8 +26,9 @@ and backup land in Phases 5–8.
 | 1 | Architecture, Drift setup, `users` + `license_config`, RBAC, boot flow | `main` |
 | 2 | Signed licences: JWT verification, vendor key generator, expiry enforcement | `feature/phase-2-license-jwt` |
 | 3 | Inventory, multi-unit stock, batches and expiry alerts + stock-in, suppliers and payables (the spec's Modules 3 and 4) | `feature/phase-3-inventory-purchases` |
-| 4 | Sales & POS: FEFO deduction, search/scan, retail/wholesale, voucher printing (the spec's Module 5) | this branch |
-| 5 onward | Returns and stock adjustments (write-offs, transfers), expenses, credit ledger, reporting, Drive backup | awaiting approval of the spec's Phase 5 brief |
+| 4 | Sales & POS: FEFO deduction, search/scan, retail/wholesale, voucher printing (the spec's Module 5) | `feature/phase-4-sales-pos` |
+| 5 | Credit ledger (receivables & payables), expenses, daily reports, encrypted database backup (the spec's Modules 6 and 7) | this branch |
+| 6 onward | Returns and stock adjustments (write-offs, transfers), ageing reports, Drive backup adapter | planned |
 
 The spec's Phase 2 brief (repositories, state management, boot flow, router
 redirects, activation and login screens) was already implemented in Phase 1, so
@@ -32,7 +37,9 @@ tooling. That renumbered the remaining roadmap by one. Purchases came forward
 into Phase 3 because stock cannot be created without a delivery: the batch table
 and the multi-unit rule are only testable end to end once something writes them.
 
-See [`docs/PHASE4_SALES.md`](docs/PHASE4_SALES.md) for the FEFO rule, the sale
+See [`docs/PHASE5_CREDIT_REPORTS_BACKUP.md`](docs/PHASE5_CREDIT_REPORTS_BACKUP.md)
+for the ledger rule, the backfill, the backup envelope and the Drive deferral,
+[`docs/PHASE4_SALES.md`](docs/PHASE4_SALES.md) for the FEFO rule, the sale
 transaction and the printing/scanning deferrals,
 [`docs/PHASE3_INVENTORY.md`](docs/PHASE3_INVENTORY.md) for the unit and money
 rules and the migration lessons, [`docs/PHASE2_LICENSE.md`](docs/PHASE2_LICENSE.md)
@@ -138,7 +145,7 @@ testable without a database or a widget tree.
 ## Testing
 
 ```bash
-flutter test                    # 299 cases
+flutter test                    # 361 cases
 flutter test --coverage         # lcov.info for CI
 python3 tools/license_generator.py --self-test   # 7 cases
 ```
@@ -179,8 +186,27 @@ Coverage is concentrated where the risk is:
   a hand-written Phase 3 (v2) fixture, asserting the four sales tables, all seven
   new indexes, and that the `payment_type` CHECK and `voucher_no` UNIQUE bite on
   the *migrated* file, which a fresh install never proves.
+- `test/features/credit/` — the ledger service (positivity, party-type isolation,
+  signed per-party sums) and `CreditRepository` against a real credit sale:
+  payments posting in step with the cached column, a statement's running balance,
+  and `reversePayment` refusing anything that isn't a payment.
+- `test/core/database/migration_v3_to_v4_test.dart` — the schema 3 → 4 upgrade on
+  a hand-written Phase 4 fixture *with live debts*: the ledger backfill must
+  reproduce every cached balance exactly, keep each document's own date, and a
+  re-open must not repeat it. The first migration that rewrites data.
+- `test/features/expenses/` and `test/features/reports/` — half-open period
+  queries, category totals, and a hand-built trading day's full
+  sales − COGS − expenses arithmetic with the low-stock and expiry alert sets.
+- `test/features/backup/data/backup_service_test.dart` — envelope round-trip,
+  wrong passphrase **and** a single flipped byte both rejected by the GCM tag,
+  foreign/truncated files rejected on the header, and `restoreIntoPlace` driven
+  against real on-disk files: live rows (including a WAL-resident one) replaced
+  and the reopened connection reading the restored data.
 - `test/routing/route_guard_test.dart` — the route permission map, and the real
-  router pushed to a protected route by both roles.
+  router pushed to a protected route by both roles. Phase 5's admin-only routes
+  made the *denial* half provable for the first time: `/pos` is legitimately held
+  by both roles, so before Phase 5 no route could demonstrate a cashier being
+  refused.
 
 `AppDatabase.forTesting(NativeDatabase.memory())` and `MemoryKeyValueStore` are
 the seams; neither requires platform channels, so the whole suite runs headless.
@@ -193,7 +219,8 @@ Deliberate decisions, not oversights — each is recorded in the ADR:
 
 - **No encryption at rest.** Cost prices and customer debt sit in a plain SQLite
   file. SQLCipher needs iOS podspec and Android ABI work; deferred to Phase 8.
-  `flutter_secure_storage` covers the licence key and session only.
+  `flutter_secure_storage` covers the licence key and session only. (Phase 5's
+  backup is encrypted, but the *live* database file is still plaintext.)
 - **Licence keys are HMAC-signed, so the app can mint them.** The verifying and
   signing secret are the same value, compiled into the APK. This stops a customer
   editing `features_data` in a SQLite editor; it does not stop someone who dumps
@@ -208,29 +235,44 @@ Deliberate decisions, not oversights — each is recorded in the ADR:
   username minimum; enforcing a 6-character floor is `SetupAdminScreen`'s rule,
   and a raw 4-digit PIN remains weak against a copied database even at 120k
   PBKDF2 rounds.
-- **ESC/POS transport, camera scanning and Drive backup are absent.** Phase 4
-  renders a voucher to PDF and reads a hardware (HID) barcode scanner through the
-  search box, both of which work offline with no new permission. Printing that PDF
-  to an actual thermal roll (ESC/POS, and a Unicode font for Burmese names) and the
-  `mobile_scanner` camera path are deferred to the on-device pass; Drive backup is
-  Phase 8.
+- **ESC/POS transport and camera scanning are absent.** Phase 4 renders a voucher
+  to PDF and reads a hardware (HID) barcode scanner through the search box, both
+  of which work offline with no new permission. Printing that PDF to an actual
+  thermal roll (ESC/POS, and a Unicode font for Burmese names) and the
+  `mobile_scanner` camera path are deferred to the on-device pass.
+- **Backup is an encrypted file, not a Drive upload.** Phase 5 ships the whole
+  pipeline — `VACUUM INTO` snapshot, PBKDF2 + AES-256-GCM envelope, in-app
+  restore — writing `.pbak` files to the app's documents directory. The Drive
+  adapter is deferred deliberately: offline CI cannot exercise OAuth, and the
+  file is the transport-neutral artifact (`BackupArtifact.bytes` +
+  `suggestedFileName`) an upload layer wraps without touching the format.
+- **A restore can roll the device clock backwards** relative to the data (an old
+  backup restored over new work), which interacts with the clock-rollback gap
+  above. No warning is shown beyond the manifest's creation date on the confirm
+  dialog; a proper "this file is older than your newest local backup" guard
+  belongs with the Drive adapter.
 
 ---
 
-## Release checklist before Phase 5
+## Release checklist before Phase 6
 
 - [ ] Generate a real `PHARMACY_LICENSE_SECRET` and stop shipping the committed
       placeholder; the dashboard warns in debug builds until this is done.
 - [ ] Decide the renewal UX — re-entering a key on an activated device currently
       resets `activated_at`. Carried unresolved from Phase 2.
 - [x] FEFO deduction rule — decided in Phase 4 as **strict**, no till override in
-      any role; bad stock is removed with a Phase 5 write-off instead.
+      any role; bad stock is removed with a Phase 6 write-off instead.
 - [x] Scanner input approach — decided in Phase 4: HID/USB barcode guns are
       keyboards handled by the POS search field's submit path; the `mobile_scanner`
       camera path is deferred to the on-device pass.
+- [x] Backup-restore contract — decided in Phase 5: a self-describing versioned
+      envelope (magic `"PPBK"`, an envelope format version byte that is *rejected*
+      on restore when unknown, plus a manifest carrying `schema_version` and the
+      creation instant shown on the confirm dialog). Schema-level compatibility —
+      restoring a *future* schema, or a Phase 1 database onto current code — is
+      still the open migration-direction question for Phase 8.
 - [ ] Wire the on-device printing pass: ESC/POS transport to the 58/80 mm roll plus
       a bundled Unicode font so Burmese shop and product names render. Confirm the
       printer models in the field before choosing the transport library.
-- [ ] Agree the backup-restore contract now: Phase 8 must be able to restore a
-      Phase 1 database, so the schema-version field belongs in the backup header
-      from the first release.
+- [ ] Build the Drive adapter on top of `BackupArtifact`, with a "newer local data
+      than this file" warning on restore.

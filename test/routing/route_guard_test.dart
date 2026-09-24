@@ -88,6 +88,24 @@ void main() {
       }
     });
 
+    test('the owner may open every Phase 5 route and stay on it', () {
+      // Phase 5 introduced the routes a cashier genuinely cannot reach, so the
+      // guard finally has a denial to prove rather than only an allow-list.
+      for (final route in [
+        AppRoutes.customerCredit,
+        AppRoutes.supplierCredit,
+        AppRoutes.expenses,
+        AppRoutes.reports,
+        AppRoutes.backup,
+      ]) {
+        expect(
+          appGuard(licensed, user(UserRole.admin), route),
+          isNull,
+          reason: '$route should stay put for the owner',
+        );
+      }
+    });
+
     test('a cashier may read stock but not write it', () {
       final cashier = user(UserRole.cashier);
 
@@ -100,6 +118,27 @@ void main() {
         appGuard(licensed, cashier, AppRoutes.addPurchase),
         AppRoutes.home,
       );
+    });
+
+    test('every Phase 5 route is refused to a cashier', () {
+      // Phase 5 is the first set of routes that neither role shares: `pos`
+      // existed on both sides, so the guard previously had no provable denial.
+      // Now a cashier typing a bookmark straight in for the profit dashboard
+      // must bounce, not land there.
+      final cashier = user(UserRole.cashier);
+      for (final route in [
+        AppRoutes.customerCredit,
+        AppRoutes.supplierCredit,
+        AppRoutes.expenses,
+        AppRoutes.reports,
+        AppRoutes.backup,
+      ]) {
+        expect(
+          appGuard(licensed, cashier, route),
+          AppRoutes.home,
+          reason: '$route must bounce a cashier back to the dashboard',
+        );
+      }
     });
 
     test('both roles may open the till', () {
@@ -131,6 +170,11 @@ void main() {
       AppRoutes.addMedicine,
       AppRoutes.addPurchase,
       AppRoutes.pos,
+      AppRoutes.customerCredit,
+      AppRoutes.supplierCredit,
+      AppRoutes.expenses,
+      AppRoutes.reports,
+      AppRoutes.backup,
     ]);
     expect(kRoutePermissions[AppRoutes.inventory], Permission.viewInventory);
     expect(
@@ -142,6 +186,20 @@ void main() {
       Permission.managePurchases,
     );
     expect(kRoutePermissions[AppRoutes.pos], Permission.pos);
+    // Phase 5. Both credit routes share `manageCredit` — receivables and
+    // payables are the two directions of one capability — while the three
+    // reporting/admin routes each own their own grant.
+    expect(
+      kRoutePermissions[AppRoutes.customerCredit],
+      Permission.manageCredit,
+    );
+    expect(
+      kRoutePermissions[AppRoutes.supplierCredit],
+      Permission.manageCredit,
+    );
+    expect(kRoutePermissions[AppRoutes.expenses], Permission.manageExpenses);
+    expect(kRoutePermissions[AppRoutes.reports], Permission.viewProfitReports);
+    expect(kRoutePermissions[AppRoutes.backup], Permission.manageBackup);
   });
 
   test('no permission is both implied and contradicted by a route entry', () {
@@ -292,6 +350,40 @@ void main() {
       await open(tester, AppRoutes.addPurchase);
       expect(find.textContaining('Signed in as till1'), findsOneWidget);
       expect(find.text('Save and add to stock'), findsNothing);
+    });
+
+    testWidgets('the real router opens the profit report for the owner', (
+      tester,
+    ) async {
+      // The GoRoute + screen wiring, not just the guard: the owner must actually
+      // land on the report, and its headline label only exists there.
+      await startAsOwner(tester);
+      expect(find.widgetWithText(OutlinedButton, 'Reports'), findsOneWidget);
+      await open(tester, AppRoutes.reports);
+      expect(find.text('Reports — today'), findsOneWidget);
+      expect(find.text('Signed in as owner'), findsNothing);
+    });
+
+    testWidgets('the profit report bounces a cashier back to the dashboard', (
+      tester,
+    ) async {
+      // Phase 5's first provable route-guard denial through the real router: no
+      // shared capability lets both roles in, so the guard's reject branch is
+      // finally exercised end-to-end rather than only by appGuard() directly.
+      await startAsOwner(tester);
+      await UserRepository(db, passwords: fast).create(
+        username: 'till1',
+        secret: 'long-enough',
+        role: UserRole.cashier,
+      );
+      await signOutThroughUi(tester);
+      await signIn(tester, 'till1');
+
+      // Nothing advertises it, and the bookmark itself is refused.
+      expect(find.widgetWithText(OutlinedButton, 'Reports'), findsNothing);
+      await open(tester, AppRoutes.reports);
+      expect(find.text('Reports — today'), findsNothing);
+      expect(find.textContaining('Signed in as till1'), findsOneWidget);
     });
   });
 }

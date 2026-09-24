@@ -82,8 +82,8 @@ class DashboardScreen extends ConsumerWidget {
           const _ModuleLinks(),
           const SizedBox(height: 8),
           Text(
-            'Phase 3 — inventory, multi-unit stock and purchase batches. The till '
-            'itself is next.',
+            'Phase 5 — credit ledgers, expenses, daily profit reports and '
+            'encrypted database backup.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall,
           ),
@@ -153,6 +153,36 @@ class _ModuleLinks extends ConsumerWidget {
           icon: Icons.local_shipping_outlined,
           label: 'Record a delivery',
           target: AppRoutes.addPurchase,
+        ),
+      if (ref.watch(permissionProvider(Permission.manageCredit))) ...[
+        _Link(
+          icon: Icons.savings_outlined,
+          label: 'Customer credit',
+          target: AppRoutes.customerCredit,
+        ),
+        _Link(
+          icon: Icons.payments_outlined,
+          label: 'Supplier payables',
+          target: AppRoutes.supplierCredit,
+        ),
+      ],
+      if (ref.watch(permissionProvider(Permission.manageExpenses)))
+        _Link(
+          icon: Icons.receipt_long_outlined,
+          label: 'Expenses',
+          target: AppRoutes.expenses,
+        ),
+      if (ref.watch(permissionProvider(Permission.viewProfitReports)))
+        _Link(
+          icon: Icons.insights_outlined,
+          label: 'Reports',
+          target: AppRoutes.reports,
+        ),
+      if (ref.watch(permissionProvider(Permission.manageBackup)))
+        _Link(
+          icon: Icons.backup_outlined,
+          label: 'Backup & restore',
+          target: AppRoutes.backup,
         ),
     ];
     if (links.isEmpty) return const SizedBox.shrink();

@@ -30,6 +30,12 @@ dependencies:
   # Hashing primitives (PBKDF2 built on Hmac)
   crypto: ^3.0.7
   pdf: ^3.13.1
+  pointycastle: ^4.0.0
+
+  # Backup archive (Phase 5). Constrained to match the version `pdf` already
+  # forces into the graph, so this is a direct dependency on the copy that is
+  # resolved anyway rather than a second, conflicting one.
+  archive: ^4.3.0
 
 dev_dependencies:
   flutter_test:

@@ -1,8 +1,10 @@
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/database/tables/credit_transactions.dart';
 import '../../../core/database/tables/sales.dart';
 import '../../../core/money.dart';
+import '../../credit/application/ledger_service.dart';
 import '../../inventory/application/unit_hierarchy.dart';
 import '../application/fefo_allocator.dart';
 
@@ -92,9 +94,10 @@ class SaleReceipt {
 /// point of doing the deduction in the database rather than from a cart-side
 /// quantity the UI computed earlier.
 class SaleRepository {
-  SaleRepository(this._db);
+  SaleRepository(this._db) : _ledger = LedgerService(_db);
 
   final AppDatabase _db;
+  final LedgerService _ledger;
 
   // --------------------------------------------------------------- customers
 
@@ -156,9 +159,18 @@ class SaleRepository {
     return query.get();
   }
 
+  /// Post a cash payment against a customer's outstanding balance.
+  ///
+  /// Writes the balance reduction *and* a `payment_received` ledger row in the
+  /// same transaction, so `recalculateCustomerDebt` can rebuild the cached
+  /// column from the ledger alone (Phase 4's oracle could not, because payments
+  /// left no trace — see `docs/PHASE4_SALES.md`).
   Future<void> recordCustomerPayment({
     required int customerId,
     required Pya amountPya,
+    int? recordedByUserId,
+    String? note,
+    DateTime? at,
   }) async {
     if (amountPya <= 0) {
       throw const SaleRejectException('Payment must be greater than zero.');
@@ -178,8 +190,21 @@ class SaleRepository {
           currentDebt: Value(customer.currentDebt - amountPya),
         ),
       );
+      await _ledger.postPayment(
+        partyType: PartyType.customer,
+        partyId: customerId,
+        amountPya: amountPya,
+        recordedByUserId: recordedByUserId,
+        note: note,
+        at: at,
+      );
     });
   }
+
+  /// Every ledger row for [customerId], oldest first — the statement screen's
+  /// feed (Module 6).
+  Future<List<CreditTransaction>> customerLedger(int customerId) =>
+      _ledger.entriesFor(partyType: PartyType.customer, partyId: customerId);
 
   // -------------------------------------------------------------------- sales
 
@@ -355,7 +380,9 @@ class SaleRepository {
 
       // 4. Post the credit, enforcing the limit against the debt as it stands
       //    *inside* this transaction, so two overlapping credit sales cannot both
-      //    pass a check made against a stale figure.
+      //    pass a check made against a stale figure. Writes a `debt_added` ledger
+      //    row linked to this voucher, so the payment history a customer's
+      //    statement screen shows has a complete trail behind it.
       if (onCredit) {
         final customer = await _requireCustomer(customerId!);
         final projected = customer.currentDebt + credit;
@@ -369,6 +396,14 @@ class SaleRepository {
         await (_db.update(_db.customers)
               ..where((t) => t.id.equals(customer.id)))
             .write(CustomersCompanion(currentDebt: Value(projected)));
+        await _ledger.postDebt(
+          partyType: PartyType.customer,
+          partyId: customerId,
+          amountPya: credit,
+          saleId: saleId,
+          recordedByUserId: cashierUserId,
+          at: now,
+        );
       }
 
       sale = await (_db.select(
@@ -437,38 +472,23 @@ class SaleRepository {
     _db.saleBatches,
   )..where((t) => t.batchId.equals(batchId))).get();
 
-  /// Rebuilds every customer's debt from their credit vouchers.
+  /// Rebuilds every customer's debt from the `credit_transactions` ledger.
   ///
-  /// The denormalised `current_debt` column can lie the same way a supplier's
-  /// payable can; this is the repair path and the test oracle for "the cached
-  /// figure equals the true one". Debt = sum of (`total - paid`) over credit
-  /// sales, i.e. the unpaid remainder of every voucher, payments having already
-  /// been applied to the column at the time they were recorded — a full rebuild
-  /// therefore cannot be done from `sales` alone. That is acceptable because the
-  /// ledger that *would* make it a pure recomputation (`credit_transactions`) is
-  /// Phase 6's, and inventing it here would fork the debt figure. For now this
-  /// re-derives the posted-credit side and leaves cash payments untouched; see
-  /// `docs/PHASE4_SALES.md`.
+  /// `current_debt` is a materialisation of `SUM(debt_added) − SUM(payment_
+  /// received)` per customer, and — with Phase 5's ledger now written by both the
+  /// credit-sale path and [recordCustomerPayment] — that sum *is* the true
+  /// balance. Before the ledger existed (Phase 4) a cash payment reduced the
+  /// column without leaving a row, so this oracle had to skip payments and could
+  /// not be trusted after one; it is now a genuine recomputation and the test
+  /// oracle for "the cached figure equals the true one". A device upgrading from
+  /// Phase 4 gets equivalent rows backfilled by the v3→4 migration, so its old
+  /// payments are visible here too.
   Future<void> recalculateCustomerDebt() async {
-    // Placeholder oracle for Phase 4's tests: sum the credit portion of each
-    // customer's vouchers. It intentionally does not subtract interim cash
-    // payments, which is why the matching test seeds only unpaid balances.
-    final creditExpr = _db.sales.totalAmount.sum() - _db.sales.paidAmount.sum();
-    final rows =
-        await (_db.selectOnly(_db.sales)
-              ..addColumns([_db.sales.customerId, creditExpr])
-              ..where(_db.sales.isCredit.equals(true))
-              ..groupBy([_db.sales.customerId]))
-            .get();
-    final byCustomer = <int, Pya>{
-      for (final row in rows)
-        if (row.read(_db.sales.customerId) != null)
-          row.read(_db.sales.customerId)!: row.read(creditExpr) ?? 0,
-    };
+    final ledger = await _ledger.balancesByParty(PartyType.customer);
     await _db.transaction(() async {
       final all = await _db.select(_db.customers).get();
       for (final customer in all) {
-        final target = byCustomer[customer.id] ?? 0;
+        final target = ledger[customer.id] ?? 0;
         if (target == customer.currentDebt) continue;
         await (_db.update(_db.customers)
               ..where((t) => t.id.equals(customer.id)))
