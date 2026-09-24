@@ -68,4 +68,10 @@ class LicenseRepository {
   Stream<LicenseConfigData?> watch() {
     return (_db.select(_db.licenseConfig)..limit(1)).watchSingleOrNull();
   }
+
+  /// Remove the activation row so a key can be re-entered.
+  ///
+  /// Only licensing state is deleted — no sales, stock or user rows are touched,
+  /// which is why re-activating with the same key restores the same permissions.
+  Future<void> clear() => _db.delete(_db.licenseConfig).go();
 }

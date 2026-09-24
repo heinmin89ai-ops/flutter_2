@@ -11,12 +11,12 @@ import 'package:pharmacy_pos/core/secure/secure_store.dart';
 import 'package:pharmacy_pos/features/auth/application/auth_providers.dart';
 import 'package:pharmacy_pos/features/auth/application/password_service.dart';
 import 'package:pharmacy_pos/features/auth/data/user_repository.dart';
-import 'package:pharmacy_pos/features/license/application/key_codec.dart';
+import 'package:pharmacy_pos/features/license/application/jwt_decoder.dart';
 import 'package:pharmacy_pos/features/license/application/license_providers.dart';
 import 'package:pharmacy_pos/features/license/data/license_repository.dart';
 import 'package:pharmacy_pos/main.dart';
 
-/// End-to-end boot flow for Phase 1: licence gate, then the auth gate.
+/// End-to-end boot flow: licence gate, then the auth gate.
 ///
 /// Driven through the real `PharmacyApp` router with an in-memory database and
 /// an in-memory key-value store, so no platform channels are involved.
@@ -28,9 +28,29 @@ import 'package:pharmacy_pos/main.dart';
 /// reports a failed sign-in.
 const PasswordService testPasswords = PasswordService(iterations: 1000);
 
+/// A live licence key for the flows under test.
+///
+/// Signed with the same compile-time secret the app's default decoder uses, so
+/// these tests exercise the real verification path rather than a stub.
+String licenceKey({
+  Map<String, bool> features = const {'retail': true},
+  DateTime? expiresAt,
+}) => JwtFeatureDecoder.issueKey(
+  features: features,
+  expiresAt: expiresAt ?? DateTime.now().add(const Duration(days: 365)),
+  client: 'Test Pharmacy',
+);
+
 /// Riverpod 3 keeps the element type of `overrides` unexported, so the scaffolds
 /// below build the list inline and let it be inferred.
-ProviderScope _app(AppDatabase db, MemoryKeyValueStore store) {
+///
+/// [decoder] is overridden only where an expiry must be judged against a clock
+/// other than wall time.
+ProviderScope _app(
+  AppDatabase db,
+  MemoryKeyValueStore store, {
+  JwtFeatureDecoder? decoder,
+}) {
   return ProviderScope(
     overrides: [
       appDatabaseProvider.overrideWithValue(db),
@@ -38,12 +58,17 @@ ProviderScope _app(AppDatabase db, MemoryKeyValueStore store) {
       userRepositoryProvider.overrideWithValue(
         UserRepository(db, passwords: testPasswords),
       ),
+      if (decoder != null) featureDecoderProvider.overrideWithValue(decoder),
     ],
     child: const PharmacyApp(),
   );
 }
 
-ProviderContainer _container(AppDatabase db, {MemoryKeyValueStore? store}) {
+ProviderContainer _container(
+  AppDatabase db, {
+  MemoryKeyValueStore? store,
+  JwtFeatureDecoder? decoder,
+}) {
   return ProviderContainer(
     overrides: [
       appDatabaseProvider.overrideWithValue(db),
@@ -53,6 +78,7 @@ ProviderContainer _container(AppDatabase db, {MemoryKeyValueStore? store}) {
       userRepositoryProvider.overrideWithValue(
         UserRepository(db, passwords: testPasswords),
       ),
+      if (decoder != null) featureDecoderProvider.overrideWithValue(decoder),
     ],
   );
 }
@@ -68,8 +94,11 @@ void main() {
 
   tearDown(() => db.close());
 
-  Future<void> pumpApp(WidgetTester tester) async {
-    await tester.pumpWidget(_app(db, store));
+  Future<void> pumpApp(
+    WidgetTester tester, {
+    JwtFeatureDecoder? decoder,
+  }) async {
+    await tester.pumpWidget(_app(db, store, decoder: decoder));
     // Fixed pumps rather than pumpAndSettle: the boot splash runs an
     // indeterminate circular progress animation that never settles.
     for (var i = 0; i < 6; i++) {
@@ -93,20 +122,34 @@ void main() {
       expect(find.text('Activate your licence'), findsOneWidget);
     });
 
-    testWidgets('a key with a bad checksum is refused and nothing is stored', (
+    testWidgets('a key with a bad signature is refused and nothing is stored', (
       tester,
     ) async {
       await pumpApp(tester);
-      await activate(tester, 'PH1-AAAAdeadbeef-12345678');
+      // Well-formed JWT shape with the signature swapped: this is what a
+      // hand-edited key looks like, and it must not reach the database.
+      final tampered = licenceKey().split('.');
+      await activate(tester, '${tampered[0]}.${tampered[1]}.${tampered[2]}XX');
 
-      expect(find.textContaining('Checksum mismatch'), findsOneWidget);
+      expect(find.textContaining('Signature mismatch'), findsOneWidget);
+      expect(await LicenseRepository(db).current(), isNull);
+    });
+
+    testWidgets('an expired key is refused at activation', (tester) async {
+      await pumpApp(tester);
+      await activate(
+        tester,
+        licenceKey(expiresAt: DateTime.now().subtract(const Duration(days: 1))),
+      );
+
+      expect(find.textContaining('expired'), findsOneWidget);
       expect(await LicenseRepository(db).current(), isNull);
     });
 
     testWidgets('a valid key persists the licence and opens first-run setup', (
       tester,
     ) async {
-      final key = PhaseOneFeatureDecoder.issueKey({'pos': true});
+      final key = licenceKey();
       await pumpApp(tester);
       await activate(tester, key);
 
@@ -121,9 +164,8 @@ void main() {
     testWidgets('after setup the created admin can sign in and reach home', (
       tester,
     ) async {
-      final key = PhaseOneFeatureDecoder.issueKey({'pos': true});
       await pumpApp(tester);
-      await activate(tester, key);
+      await activate(tester, licenceKey());
 
       final fields = find.byType(TextField);
       await tester.enterText(fields.at(0), 'owner');
@@ -141,9 +183,8 @@ void main() {
     testWidgets('a signed-in session is restored on the next launch', (
       tester,
     ) async {
-      final key = PhaseOneFeatureDecoder.issueKey({'pos': true});
       await pumpApp(tester);
-      await activate(tester, key);
+      await activate(tester, licenceKey());
 
       final fields = find.byType(TextField);
       await tester.enterText(fields.at(0), 'owner');
@@ -165,9 +206,8 @@ void main() {
     });
 
     testWidgets('signing out returns to the login screen', (tester) async {
-      final key = PhaseOneFeatureDecoder.issueKey({'pos': true});
       await pumpApp(tester);
-      await activate(tester, key);
+      await activate(tester, licenceKey());
 
       final fields = find.byType(TextField);
       await tester.enterText(fields.at(0), 'owner');
@@ -198,8 +238,9 @@ void main() {
         db,
         passwords: const PasswordService(iterations: 1000),
       ).create(username: 'owner', secret: 'long-enough', role: UserRole.admin);
-      await LicenseRepository(db)
-          .activate(activationKey: 'PH1-x-0000', featuresData: '{"pos":true}');
+      await LicenseRepository(
+        db,
+      ).activate(activationKey: licenceKey(), featuresData: '{"retail":true}');
 
       final auth = container.read(authProvider.notifier);
       expect(
@@ -230,38 +271,113 @@ void main() {
     });
 
     test(
-      'load surfaces a corrupt stored payload instead of bricking the app',
+      'load re-verifies the stored key instead of trusting the cached blob',
       () async {
-        // Written directly, as a partial Phase 7 restore would leave it.
-        await LicenseRepository(db)
-            .activate(activationKey: 'PH1-x-0000', featuresData: 'not json');
+        // The cached features_data says the shop is licensed; the key does not
+        // verify. The key wins — this is the tamper path Phase 1 left open.
+        await LicenseRepository(db).activate(
+          activationKey: 'a.b.c',
+          featuresData: '{"retail":true,"wholesale":true}',
+        );
 
         final container = _container(db, store: store);
         addTearDown(container.dispose);
 
         await container.read(licenseProvider.notifier).load();
         final state = container.read(licenseProvider);
-
         expect(state.status, LicenseStatus.invalidKey);
-        expect(state.message, contains('unreadable'));
-        // Re-entering the key is the recovery path, so the app must not treat
-        // itself as licensed.
         expect(state.isActivated, isFalse);
+        expect(state.features, isEmpty);
       },
     );
 
-    test('an absent feature key reads as disabled', () async {
+    test('an expired key stops working after a restart', () async {
+      // Written while still valid, then re-checked against a clock past `exp`.
+      final key = licenceKey(expiresAt: DateTime.utc(2026, 6, 1));
       await LicenseRepository(db)
-          .activate(activationKey: 'PH1-x-0000', featuresData: '{"pos":true}');
+          .activate(activationKey: key, featuresData: '{"retail":true}');
+
+      final container = _container(
+        db,
+        store: store,
+        decoder: JwtFeatureDecoder(now: DateTime.utc(2027, 1, 1)),
+      );
+      addTearDown(container.dispose);
+
+      await container.read(licenseProvider.notifier).load();
+      final state = container.read(licenseProvider);
+      expect(state.status, LicenseStatus.expired);
+      expect(state.isActivated, isFalse);
+      expect(state.message, contains('expired'));
+    });
+
+    test('a live key exposes expiry and client to the dashboard', () async {
+      await LicenseRepository(db).activate(
+        activationKey: licenceKey(features: {'retail': true}),
+        featuresData: '{"retail":true}',
+      );
 
       final container = _container(db, store: store);
       addTearDown(container.dispose);
 
       await container.read(licenseProvider.notifier).load();
       final state = container.read(licenseProvider);
-      expect(state.featureEnabled('pos'), isTrue);
+      expect(state.status, LicenseStatus.active);
+      expect(state.client, 'Test Pharmacy');
+      expect(state.featureEnabled('retail'), isTrue);
+      expect(state.expiresAt, isNotNull);
+      expect(state.daysRemaining, greaterThan(300));
+    });
+
+    test('a key inside the warning window reports expiringSoon', () async {
+      await LicenseRepository(db).activate(
+        activationKey: licenceKey(
+          expiresAt: DateTime.now().add(const Duration(days: 9)),
+        ),
+        featuresData: '{"retail":true}',
+      );
+
+      final container = _container(db, store: store);
+      addTearDown(container.dispose);
+
+      await container.read(licenseProvider.notifier).load();
+      expect(container.read(licenseProvider).expiringSoon, isTrue);
+    });
+
+    test('an absent feature key reads as disabled', () async {
+      await LicenseRepository(db).activate(
+        activationKey: licenceKey(features: {'retail': true}),
+        featuresData: '{"retail":true}',
+      );
+
+      final container = _container(db, store: store);
+      addTearDown(container.dispose);
+
+      await container.read(licenseProvider.notifier).load();
+      final state = container.read(licenseProvider);
+      expect(state.featureEnabled('retail'), isTrue);
       expect(state.featureEnabled('credit'), isFalse);
     });
+
+    test(
+      'deactivate clears the licence and returns to the activation gate',
+      () async {
+        final container = _container(db, store: store);
+        addTearDown(container.dispose);
+
+        await container.read(licenseProvider.notifier).activate(licenceKey());
+        expect(container.read(licenseProvider).isActivated, isTrue);
+        expect(store.values, contains(SecureStore.keyLicenseKey));
+
+        await container.read(licenseProvider.notifier).deactivate();
+        expect(
+          container.read(licenseProvider).status,
+          LicenseStatus.notActivated,
+        );
+        expect(await LicenseRepository(db).current(), isNull);
+        expect(store.values, isNot(contains(SecureStore.keyLicenseKey)));
+      },
+    );
   });
 
   group('permissions', () {

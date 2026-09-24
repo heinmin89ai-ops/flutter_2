@@ -114,7 +114,7 @@ class _ActivationKeyScreenState extends ConsumerState<ActivationKeyScreen> {
                     minLines: 1,
                     decoration: InputDecoration(
                       labelText: 'Activation key',
-                      hintText: 'PH1-…',
+                      hintText: 'eyJhbGciOiJIUzI1NiIs…',
                       border: const OutlineInputBorder(),
                       errorText: _error,
                       suffixIcon: _error == null
@@ -122,10 +122,12 @@ class _ActivationKeyScreenState extends ConsumerState<ActivationKeyScreen> {
                           : const Icon(Icons.error_outline),
                     ),
                     inputFormatters: [
-                      // Keys are base64url + hex; block the characters that would
-                      // break the segment split and cause confusing errors.
+                      // A JWT is three base64url segments joined by '.'. The
+                      // separator must be allowed or the field silently drops
+                      // every pasted key; spaces and newlines are stripped so a
+                      // key wrapped across lines in an email still pastes.
                       FilteringTextInputFormatter.allow(
-                        RegExp(r'[A-Za-z0-9_\-]'),
+                        RegExp(r'[A-Za-z0-9_\-.]'),
                       ),
                     ],
                     onSubmitted: (_) => _submit(),

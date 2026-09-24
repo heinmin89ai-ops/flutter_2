@@ -20,10 +20,18 @@ class LicenseConfig extends Table {
 
   /// Raw vendor-issued key, kept verbatim so it can be re-submitted when the
   /// shop moves to a new device.
+  ///
+  /// **This column is the source of truth.** Since Phase 2 the boot flow
+  /// re-verifies it (signature and expiry) on every start, so the value below is
+  /// never trusted on its own.
   TextColumn get activationKey => text().named('activation_key')();
 
   /// JSON string of module permissions, e.g.
-  /// `{"pos":true,"reports":true,"credit":false}`.
+  /// `{"retail":true,"wholesale":true}`.
+  ///
+  /// Display cache only — derived from [activationKey] at activation and never
+  /// read to make an access decision. A hand-edited value here grants nothing,
+  /// which is the tamper path Phase 1 left open.
   TextColumn get featuresData => text().named('features_data')();
 
   DateTimeColumn get activatedAt => dateTime().named('activated_at')();

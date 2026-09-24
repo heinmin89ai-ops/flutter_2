@@ -277,8 +277,12 @@ could never succeed.
 blob is tamperable — editing JSON on the device unlocks paid modules. Phase 1
 implements the flow as specified and stores the raw key, but `key_codec.dart` is
 written behind an interface so a signed/HMAC-verified payload can replace the
-decoder in Phase 7 without touching the boot screen. Flagging now so it is not
-mistaken for a complete licensing scheme.
+decoder without touching the boot screen. Flagging now so it is not mistaken for
+a complete licensing scheme.
+
+> **Resolved in Phase 2.** The decoder is now HMAC-verified and re-checked on
+> every start, so an edited `features_data` grants nothing. See
+> [`PHASE2_LICENSE.md`](PHASE2_LICENSE.md).
 
 ---
 

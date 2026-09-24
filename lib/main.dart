@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/database/app_database.dart';
-import 'core/rbac/permission.dart';
 import 'features/auth/application/auth_providers.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/auth/presentation/setup_admin_screen.dart';
 import 'features/license/application/license_providers.dart';
 import 'features/license/presentation/activation_key_screen.dart';
+import 'features/shell/presentation/dashboard_screen.dart';
 import 'routing/routes.dart';
 
 void main() {
@@ -74,7 +74,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.home,
-        builder: (context, state) => const PhaseOneHome(),
+        builder: (context, state) => const DashboardScreen(),
       ),
     ],
   );
@@ -141,58 +141,5 @@ class _BootGateState extends ConsumerState<BootGate> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(body: Center(child: CircularProgressIndicator()));
-  }
-}
-
-/// Placeholder landing screen for Phase 1.
-///
-/// The real navigation shell arrives with inventory (Phase 2) and POS (Phase 4);
-/// building it now would only have to be moved.
-class PhaseOneHome extends ConsumerWidget {
-  const PhaseOneHome({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authProvider);
-    final license = ref.watch(licenseProvider);
-    final maySeeCost = ref.watch(permissionProvider(Permission.viewCostPrice));
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pharmacy POS'),
-        actions: [
-          IconButton(
-            tooltip: 'Sign out',
-            onPressed: () => ref.read(authProvider.notifier).signOut(),
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                'Signed in as ${user?.username ?? '—'}',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 4),
-              Text('Role: ${user?.role.name ?? '—'}'),
-              const SizedBox(height: 20),
-              Text(
-                'Phase 1 — foundation\n\n'
-                'Licence status: ${license.status.name}\n'
-                'Licensed modules: ${license.features.keys.join(', ')}\n'
-                'Cost prices visible: $maySeeCost',
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

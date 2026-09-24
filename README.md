@@ -3,10 +3,12 @@
 Offline-first mobile pharmacy management system (retail & wholesale) for Android
 and iOS. Flutter · Riverpod · drift (SQLite).
 
-**Current status: Phase 1 — foundation.** Folder structure, Drift schema for
-`users` and `license_config`, RBAC map, PBKDF2 credential hashing, activation-key
-boot flow, and the licence → login → home route guard. Inventory, purchasing, POS,
-credit, reporting and backup land in Phases 2–7.
+**Current status: Phase 2 — signed licences.** The activation key is now an
+HS256 JWT, verified in-app on every start, with a standalone vendor generator in
+`tools/license_generator.py`. Phase 1 delivered the folder structure, Drift
+schema for `users` and `license_config`, RBAC, PBKDF2 credential hashing and the
+licence → login → home route guard. Inventory, purchasing, POS, credit, reporting
+and backup land in Phases 3–8.
 
 ---
 
@@ -14,15 +16,22 @@ credit, reporting and backup land in Phases 2–7.
 
 | Phase | Modules | Status |
 |---|---|---|
-| 1 | Architecture, Drift setup, `users` + `license_config`, RBAC, boot flow | this branch |
-| 2 | Inventory & stock: medicines, unit hierarchy, batches, FEFO, alerts | planned |
-| 3 | Purchases (stock-in) & expenses | planned |
-| 4 | Sales & POS: search/scan, unit switching, retail/wholesale, returns | planned |
-| 5 | Vouchers: thermal print, PDF, Viber/Telegram share | planned |
-| 6 | Credit management & reporting dashboards | planned |
-| 7 | Backup & restore to Google Drive | planned |
+| 1 | Architecture, Drift setup, `users` + `license_config`, RBAC, boot flow | `main` |
+| 2 | Signed licences: JWT verification, vendor key generator, expiry enforcement | this branch |
+| 3 | Inventory & stock: medicines, unit hierarchy, batches, FEFO, alerts | planned |
+| 4 | Purchases (stock-in) & expenses | planned |
+| 5 | Sales & POS: search/scan, unit switching, retail/wholesale, returns | planned |
+| 6 | Vouchers: thermal print, PDF, Viber/Telegram share | planned |
+| 7 | Credit management & reporting dashboards | planned |
+| 8 | Backup & restore to Google Drive | planned |
 
-See [`docs/PHASE1_ARCHITECTURE.md`](docs/PHASE1_ARCHITECTURE.md) for the
+The spec's Phase 2 brief (repositories, state management, boot flow, router
+redirects, activation and login screens) was already implemented in Phase 1, so
+this phase delivers only what was genuinely new — the licence signing scheme and
+tooling. That renumbered the remaining roadmap by one.
+
+See [`docs/PHASE2_LICENSE.md`](docs/PHASE2_LICENSE.md) for the key format and its
+limits, and [`docs/PHASE1_ARCHITECTURE.md`](docs/PHASE1_ARCHITECTURE.md) for the
 architecture decision record.
 
 ---
@@ -50,9 +59,9 @@ main()
   └─ BootGate: load licence, restore session
        ├─ license_config empty ................. ActivationKeyScreen
        │    └─ valid key ....................... SetupAdminScreen (first run) → LoginScreen
-       ├─ stored payload unreadable ............ ActivationKeyScreen (re-enter key)
+       ├─ stored key fails signature / expired . ActivationKeyScreen (re-enter key)
        ├─ licensed, no session ................. LoginScreen
-       └─ licensed, session restored ........... PhaseOneHome
+       └─ licensed, session restored ........... DashboardScreen
 ```
 
 Routes are guarded in one place (`_guard` in `lib/main.dart`), driven by a
@@ -62,6 +71,31 @@ splash, and an absent session denies every permission.
 
 On a fresh install the first Admin is created through `SetupAdminScreen` rather
 than seeded with a default PIN — see the ADR for why.
+
+---
+
+## Licence keys
+
+The vendor tool is dependency-free Python:
+
+```bash
+python3 tools/license_generator.py \
+  --client "Hein Pharmacy, Yangon" \
+  --exp 2027-01-01 \
+  --features '{"retail": true, "wholesale": true, "cloud_backup": false}'
+```
+
+It prints a JWT to paste into the activation screen. `--verify` checks a key a
+customer is holding, `--self-test` proves the signing paths. Before issuing real
+keys, set the secret on both sides:
+
+```bash
+export PHARMACY_LICENSE_SECRET='<your secret>'
+flutter build apk --release --dart-define=PHARMACY_LICENSE_SECRET="$PHARMACY_LICENSE_SECRET"
+```
+
+`docs/PHASE2_LICENSE.md` explains the format and, importantly, what this scheme
+does *not* protect against.
 
 ---
 
@@ -75,11 +109,10 @@ lib/
 ```
 
 Features never import another feature's `presentation/`; cross-feature calls go
-through the owning feature's `application/` providers. Pure business rules
-(`key_codec.dart`, `password_service.dart`) stay free of Flutter imports so they
-are testable without a widget tree.
+through the owning feature's `application/` providers. Pure business rules (`key_codec.dart`, `jwt_decoder.dart`, `password_service.dart`)
+stay free of Flutter imports so they are testable without a widget tree.
 
-Phase 2 adds `features/inventory/` with the FEFO allocator, unit hierarchy and
+Phase 3 adds `features/inventory/` with the FEFO allocator, unit hierarchy and
 stock formatter as pure Dart, and they are the first things under test there.
 
 ---
@@ -87,12 +120,17 @@ stock formatter as pure Dart, and they are the first things under test there.
 ## Testing
 
 ```bash
-flutter test                    # 88 cases
+flutter test                    # 106 cases
 flutter test --coverage         # lcov.info for CI
+python3 tools/license_generator.py --self-test   # 7 cases
 ```
 
 Coverage is concentrated where the risk is:
 
+- `test/features/license/application/jwt_decoder_test.dart` — signature and
+  `alg`-confusion rejection, expiry against an injected clock, and
+  **cross-language vectors**: keys produced by the Python tool are verified in
+  Dart, and Dart issuance is asserted byte-identical to Python's.
 - `test/features/auth/application/pbkdf2_vectors_test.dart` — the hand-written
   PBKDF2 loop is checked against `hashlib` reference vectors, not merely
   round-tripped against itself.
@@ -100,7 +138,8 @@ Coverage is concentrated where the risk is:
   username, enum storage, and that the `foreign_keys` pragma is actually applied
   per connection.
 - `test/boot_flow_test.dart` — the real router and screens driven end to end
-  against an in-memory database and an in-memory key-value store.
+  against an in-memory database and an in-memory key-value store, including the
+  expired-after-restart and edited-`features_data` paths.
 - `test/features/auth/data/user_repository_test.dart` — coarse auth outcomes,
   soft delete, last-admin guard, RBAC map.
 
@@ -111,33 +150,40 @@ the seams; neither requires platform channels, so the whole suite runs headless.
 
 ## Known gaps carried forward
 
-Deliberate Phase 1 decisions, not oversights — each is recorded in the ADR:
+Deliberate decisions, not oversights — each is recorded in the ADR:
 
 - **No encryption at rest.** Cost prices and customer debt sit in a plain SQLite
-  file. SQLCipher needs iOS podspec and Android ABI work; deferred to Phase 7.
+  file. SQLCipher needs iOS podspec and Android ABI work; deferred to Phase 8.
   `flutter_secure_storage` covers the licence key and session only.
-- **Activation keys are checksummed, not signed.** A rooted device can forge a
-  key with valid framing. The decoder sits behind `FeatureDecoder` so a signed
-  implementation can replace it without touching the boot screen.
+- **Licence keys are HMAC-signed, so the app can mint them.** The verifying and
+  signing secret are the same value, compiled into the APK. This stops a customer
+  editing `features_data` in a SQLite editor; it does not stop someone who dumps
+  the binary. Ed25519 is the fix and `FeatureDecoder` exists so it is a one-line
+  swap — see `docs/PHASE2_LICENSE.md`.
+- **No licence revocation.** An offline device with a valid key keeps working.
+  Mitigated by issuing a short `exp` and the dashboard countdown, not by code.
+- **Device clock rollback extends an expiring licence.** Needs a persisted
+  high-water boot time, which interacts with Phase 8 backup restore — deliberately
+  unbuilt until that contract exists.
 - **`PIN or password` accepts short values.** The store rejects nothing below the
   username minimum; enforcing a 6-character floor is `SetupAdminScreen`'s rule,
   and a raw 4-digit PIN remains weak against a copied database even at 120k
   PBKDF2 rounds.
 - **Thermal printing, barcode scanning and Drive backup are absent.** Hardware-
-  dependent, scheduled in Phases 5 and 7.
+  dependent, scheduled in Phases 6 and 8.
 
 ---
 
-## Release checklist before Phase 2
+## Release checklist before Phase 3
 
+- [ ] Generate a real `PHARMACY_LICENSE_SECRET` and stop shipping the committed
+      placeholder; the dashboard warns in debug builds until this is done.
+- [ ] Decide the renewal UX — re-entering a key on an activated device currently
+      resets `activated_at`.
 - [ ] Decide the `mobile_scanner` vs. Bluetooth-HID scanner input approach (affects
-      POS field focus handling in Phase 4).
+      POS field focus handling in Phase 5).
 - [ ] Confirm 58mm vs 80mm printer models in the field; `blue_thermal_printer`
       connection lifecycle is easier to get right if it is designed in early.
-- [ ] Add CI running `dart format --output=none --set-exit-if-changed`, `flutter
-      analyze --fatal-infos`, `flutter test` and a **codegen-drift check**
-      (`build_runner build` then `git diff --exit-code`) so a forgotten
-      regeneration cannot merge.
-- [ ] Agree the backup-restore contract now: Phase 7 must be able to restore a
+- [ ] Agree the backup-restore contract now: Phase 8 must be able to restore a
       Phase 1 database, so the schema-version field belongs in the backup header
       from the first release.
