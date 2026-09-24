@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/rbac/permission.dart';
+import '../../../routing/routes.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../license/application/license_providers.dart';
 import '../../license/application/license_secret.dart';
@@ -76,10 +78,12 @@ class DashboardScreen extends ConsumerWidget {
                 : 'Cost prices and profit reports are hidden for the '
                       '${user?.role.name ?? 'current'} role.',
           ),
+          const SizedBox(height: 16),
+          const _ModuleLinks(),
           const SizedBox(height: 8),
           Text(
-            'Phase 2 — signed licences. Inventory, FEFO allocation and batches '
-            'land next.',
+            'Phase 3 — inventory, multi-unit stock and purchase batches. The till '
+            'itself is next.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall,
           ),
@@ -115,6 +119,63 @@ class _ExpiryBanner extends ConsumerWidget {
 }
 
 enum CardTone { neutral, warning }
+
+/// Module entry points the signed-in role may actually open.
+///
+/// Rendered from the same permissions the router enforces, so the dashboard never
+/// advertises a screen that then bounces the user straight back here.
+class _ModuleLinks extends ConsumerWidget {
+  const _ModuleLinks();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final links = <Widget>[
+      if (ref.watch(permissionProvider(Permission.viewInventory)))
+        _Link(
+          icon: Icons.inventory_2_outlined,
+          label: 'Inventory',
+          target: AppRoutes.inventory,
+        ),
+      if (ref.watch(permissionProvider(Permission.manageInventory)))
+        _Link(
+          icon: Icons.note_add_outlined,
+          label: 'Add medicine',
+          target: AppRoutes.addMedicine,
+        ),
+      if (ref.watch(permissionProvider(Permission.managePurchases)))
+        _Link(
+          icon: Icons.local_shipping_outlined,
+          label: 'Record a delivery',
+          target: AppRoutes.addPurchase,
+        ),
+    ];
+    if (links.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: links,
+    );
+  }
+}
+
+class _Link extends StatelessWidget {
+  const _Link({required this.icon, required this.label, required this.target});
+
+  final IconData icon;
+  final String label;
+  final String target;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: OutlinedButton.icon(
+        onPressed: () => GoRouter.of(context).push(target),
+        icon: Icon(icon),
+        label: Align(alignment: Alignment.centerLeft, child: Text(label)),
+      ),
+    );
+  }
+}
 
 class _Card extends StatelessWidget {
   const _Card({

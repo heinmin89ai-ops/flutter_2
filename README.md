@@ -3,12 +3,14 @@
 Offline-first mobile pharmacy management system (retail & wholesale) for Android
 and iOS. Flutter · Riverpod · drift (SQLite).
 
-**Current status: Phase 2 — signed licences.** The activation key is now an
-HS256 JWT, verified in-app on every start, with a standalone vendor generator in
-`tools/license_generator.py`. Phase 1 delivered the folder structure, Drift
-schema for `users` and `license_config`, RBAC, PBKDF2 credential hashing and the
-licence → login → home route guard. Inventory, purchasing, POS, credit, reporting
-and backup land in Phases 3–8.
+**Current status: Phase 3 — inventory and purchases.** Six tables (`medicines`,
+`unit_conversions`, `medicine_batches`, `suppliers`, `purchases`,
+`purchase_items`), the multi-unit hierarchy, dynamically computed batch stock,
+stock-in that creates batches in one transaction, supplier payables, and three
+screens. Schema 1 → 2 is this project's first real migration. Phase 1 delivered
+the folder structure, Drift setup, RBAC and the boot flow; Phase 2 made the
+activation key a signed JWT. POS, vouchers, credit, reporting and backup land in
+Phases 4–8.
 
 ---
 
@@ -17,22 +19,23 @@ and backup land in Phases 3–8.
 | Phase | Modules | Status |
 |---|---|---|
 | 1 | Architecture, Drift setup, `users` + `license_config`, RBAC, boot flow | `main` |
-| 2 | Signed licences: JWT verification, vendor key generator, expiry enforcement | this branch |
-| 3 | Inventory & stock: medicines, unit hierarchy, batches, FEFO, alerts | planned |
-| 4 | Purchases (stock-in) & expenses | planned |
-| 5 | Sales & POS: search/scan, unit switching, retail/wholesale, returns | planned |
-| 6 | Vouchers: thermal print, PDF, Viber/Telegram share | planned |
-| 7 | Credit management & reporting dashboards | planned |
-| 8 | Backup & restore to Google Drive | planned |
+| 2 | Signed licences: JWT verification, vendor key generator, expiry enforcement | `feature/phase-2-license-jwt` |
+| 3 | Inventory, multi-unit stock, batches and expiry alerts + stock-in, suppliers and payables (the spec's Modules 3 and 4) | this branch |
+| 4 | Sales & POS: FEFO deduction, search/scan, retail/wholesale, returns, voucher printing | awaiting approval of the spec's Phase 4 brief |
+| 5 onward | Stock adjustments (write-offs, transfers), expenses, credit, reporting, Drive backup | planned |
 
 The spec's Phase 2 brief (repositories, state management, boot flow, router
 redirects, activation and login screens) was already implemented in Phase 1, so
-this phase delivers only what was genuinely new — the licence signing scheme and
-tooling. That renumbered the remaining roadmap by one.
+that phase delivered only what was genuinely new — the licence signing scheme and
+tooling. That renumbered the remaining roadmap by one. Purchases came forward
+into Phase 3 because stock cannot be created without a delivery: the batch table
+and the multi-unit rule are only testable end to end once something writes them.
 
-See [`docs/PHASE2_LICENSE.md`](docs/PHASE2_LICENSE.md) for the key format and its
-limits, and [`docs/PHASE1_ARCHITECTURE.md`](docs/PHASE1_ARCHITECTURE.md) for the
-architecture decision record.
+See [`docs/PHASE3_INVENTORY.md`](docs/PHASE3_INVENTORY.md) for the unit and money
+rules and the migration lessons, [`docs/PHASE2_LICENSE.md`](docs/PHASE2_LICENSE.md)
+for the key format and its limits, and
+[`docs/PHASE1_ARCHITECTURE.md`](docs/PHASE1_ARCHITECTURE.md) for the architecture
+decision record.
 
 ---
 
@@ -64,10 +67,15 @@ main()
        └─ licensed, session restored ........... DashboardScreen
 ```
 
-Routes are guarded in one place (`_guard` in `lib/main.dart`), driven by a
+Routes are guarded in one place (`appGuard` in `lib/main.dart`), driven by a
 `ChangeNotifier` that bridges the licence and auth providers into GoRouter's
 `refreshListenable`. Both gates fail closed: an unknown licence state holds on the
 splash, and an absent session denies every permission.
+
+Phase 3 added a third layer: `kRoutePermissions` maps each feature route to the
+permission it requires, so a typed or bookmarked URL is denied by the same rule
+that hides the dashboard's button. `appGuard` is a pure function of (licence
+state, session, location) so that map is testable without a widget tree.
 
 On a fresh install the first Admin is created through `SetupAdminScreen` rather
 than seeded with a default PIN — see the ADR for why.
@@ -105,22 +113,27 @@ does *not* protect against.
 lib/
   core/        database, rbac, secure storage, shared primitives
   features/    one folder per module: data / application / presentation
-  routing/     route path constants
+  routing/     route path constants and the route→permission map
 ```
 
 Features never import another feature's `presentation/`; cross-feature calls go
 through the owning feature's `application/` providers. Pure business rules (`key_codec.dart`, `jwt_decoder.dart`, `password_service.dart`)
 stay free of Flutter imports so they are testable without a widget tree.
+`unit_hierarchy.dart` and `money.dart` follow the same rule.
 
-Phase 3 adds `features/inventory/` with the FEFO allocator, unit hierarchy and
-stock formatter as pure Dart, and they are the first things under test there.
+Phase 3 added `features/inventory/` and `features/purchases/`. Two pieces are
+pure Dart with no drift or Flutter imports, because they decide what a customer
+actually receives: `unit_hierarchy.dart` (the packaging arithmetic and the
+smallest-unit rule) and `money.dart` (integer pya). The FEFO *allocator* is
+Phase 4's; what exists here is the ordering it will consume — `batchesFor`
+returns live batches soonest-expiry first.
 
 ---
 
 ## Testing
 
 ```bash
-flutter test                    # 106 cases
+flutter test                    # 243 cases
 flutter test --coverage         # lcov.info for CI
 python3 tools/license_generator.py --self-test   # 7 cases
 ```
@@ -142,6 +155,18 @@ Coverage is concentrated where the risk is:
   expired-after-restart and edited-`features_data` paths.
 - `test/features/auth/data/user_repository_test.dart` — coarse auth outcomes,
   soft delete, last-admin guard, RBAC map.
+- `test/core/database/migration_v1_to_v2_test.dart` — the schema 1 → 2 upgrade,
+  built on a hand-written Phase 1 fixture rather than the current drift model.
+  This is where the `customConstraint`-eats-`DEFAULT` and missing-`createIndex`
+  bugs were caught; a fresh install passes both.
+- `test/features/inventory/` — money parsing, the unit hierarchy, and stock
+  computed from batches. Includes a test asserting `medicines` has *no* stock
+  column, so the cache cannot be added back by accident.
+- `test/features/purchases/data/purchase_repository_test.dart` — stock-in
+  creating batches, unit conversion at the boundary, repeated-batch merge with a
+  blended cost, and the cached payable agreeing with `recalculatePayable`.
+- `test/routing/route_guard_test.dart` — the route permission map, and the real
+  router pushed to a protected route by both roles.
 
 `AppDatabase.forTesting(NativeDatabase.memory())` and `MemoryKeyValueStore` are
 the seams; neither requires platform channels, so the whole suite runs headless.
@@ -174,12 +199,15 @@ Deliberate decisions, not oversights — each is recorded in the ADR:
 
 ---
 
-## Release checklist before Phase 3
+## Release checklist before Phase 4
 
 - [ ] Generate a real `PHARMACY_LICENSE_SECRET` and stop shipping the committed
       placeholder; the dashboard warns in debug builds until this is done.
 - [ ] Decide the renewal UX — re-entering a key on an activated device currently
-      resets `activated_at`.
+      resets `activated_at`. Carried unresolved from Phase 2.
+- [ ] Choose the FEFO deduction rule at the till: strict (never sell a later
+      batch while an earlier one has stock) or allowed-with-override, and who may
+      override. Batch ordering is already what `batchesFor` returns.
 - [ ] Decide the `mobile_scanner` vs. Bluetooth-HID scanner input approach (affects
       POS field focus handling in Phase 5).
 - [ ] Confirm 58mm vs 80mm printer models in the field; `blue_thermal_printer`

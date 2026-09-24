@@ -38,5 +38,10 @@ dev_dependencies:
   drift_dev: ^2.35.0
   build_runner: ^2.16.1
 
+  # Only the schema-migration test uses this directly, to build a real on-disk
+  # Phase 1 database before drift ever opens it. Declared rather than relied on
+  # transitively through drift/native, which the analyzer rightly complains about.
+  sqlite3: ^3.5.2
+
 flutter:
   uses-material-design: true
