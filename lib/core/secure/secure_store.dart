@@ -46,6 +46,7 @@ class SecureStore {
 
   static const String keyLicenseKey = 'license.activation_key';
   static const String keySessionUser = 'auth.session.user_id';
+  static const String keyLocale = 'app.locale';
 
   Future<String?> read(String key) => _store.read(key);
 
@@ -63,6 +64,10 @@ class SecureStore {
 
   Future<void> writeSessionUserId(int userId) =>
       write(key: keySessionUser, value: userId.toString());
+
+  Future<String?> readLocale() => read(keyLocale);
+
+  Future<void> writeLocale(String code) => write(key: keyLocale, value: code);
 }
 
 /// In-memory [KeyValueStore] for tests.

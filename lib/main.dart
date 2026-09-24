@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/database/app_database.dart';
 import 'core/database/tables/credit_transactions.dart';
+import 'core/locale/locale_controller.dart';
 import 'core/rbac/permission.dart';
 import 'features/auth/application/auth_providers.dart';
 import 'features/auth/presentation/login_screen.dart';
@@ -15,10 +19,12 @@ import 'features/inventory/presentation/add_medicine_screen.dart';
 import 'features/inventory/presentation/inventory_list_screen.dart';
 import 'features/license/application/license_providers.dart';
 import 'features/license/presentation/activation_key_screen.dart';
+import 'features/notifications/application/expiry_alert_service.dart';
 import 'features/purchases/presentation/add_purchase_screen.dart';
 import 'features/reports/presentation/report_dashboard_screen.dart';
 import 'features/sales/presentation/pos_screen.dart';
 import 'features/shell/presentation/dashboard_screen.dart';
+import 'l10n/generated/app_localizations.dart';
 import 'routing/routes.dart';
 
 void main() {
@@ -31,9 +37,19 @@ class PharmacyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+
     return MaterialApp.router(
       title: 'Pharmacy POS',
       debugShowCheckedModeBanner: false,
+      locale: Locale(locale),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: ThemeData(
         colorSchemeSeed: const Color(0xFF0F766E),
         useMaterial3: true,
@@ -195,10 +211,17 @@ class _BootGateState extends ConsumerState<BootGate> {
     await license.load();
     if (!mounted) return;
 
+    await ref.read(localeProvider.notifier).load();
+    if (!mounted) return;
+
     if (!ref.read(licenseProvider).isActivated) return; // guard routes onward
 
     await ref.read(authProvider.notifier).restoreSession();
     if (!mounted) return;
+
+    // Fire expiry notifications after auth is restored, non-blocking.
+    unawaited(runExpiryAlertStartup(ref));
+
     if (ref.read(authProvider) != null) return;
 
     // Fresh install: no account exists, so there is nothing to log into.

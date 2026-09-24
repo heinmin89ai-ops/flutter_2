@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/money.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../inventory/application/inventory_providers.dart';
 import '../../inventory/application/unit_hierarchy.dart';
 import '../../inventory/data/inventory_repository.dart';
+import '../../scanning/application/scan_resolution.dart';
+import '../../scanning/presentation/scanner_screen.dart';
 import '../application/cart_controller.dart';
 import '../application/pos_providers.dart';
 import 'checkout_bottom_sheet.dart';
@@ -17,13 +20,15 @@ import 'checkout_bottom_sheet.dart';
 /// thin view over [cartProvider] — every number a cashier sees is the cart's, and
 /// the cart only ever holds prices resolved from real `unit_conversions` rows.
 ///
-/// **Scanning is keyboard input, not a camera plugin.** A Bluetooth/USB barcode
-/// gun is a HID keyboard: it types the code and presses Enter. The search field
-/// already receives that, so its submit handler tries an exact barcode match
-/// first. That covers the blueprint's "Bluetooth scanner" with no new dependency
-/// and no camera permission; the `mobile_scanner` camera path is deferred to the
-/// on-device pass (see `docs/PHASE4_SALES.md`), where it adds a permission the
-/// till otherwise does not need.
+/// **Two scanning paths, one resolution.** A Bluetooth/USB barcode gun is a HID
+/// keyboard: it types the code and presses Enter, and the search field's submit
+/// handler tries an exact barcode match first. Phase 6 added the camera path —
+/// the AppBar scanner button opens [ScannerScreen] (`mobile_scanner`) and feeds
+/// the raw code through the same exact-barcode decision as [resolveScan], so a
+/// camera read and a hardware scan cannot disagree about what a code means. Both
+/// remain an *exact* `medicines.barcode` match: the till's `findByBarcode` uses
+/// equality, not `LIKE`, because a partial scan adding the wrong product is worse
+/// than asking the cashier to search.
 class POSScreen extends ConsumerStatefulWidget {
   const POSScreen({super.key});
 
@@ -48,11 +53,12 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
   /// Enter/scan: an exact barcode wins, otherwise the visible top result is added.
   Future<void> _onSearchSubmitted() async {
+    final l10n = AppLocalizations.of(context);
     final code = _search.text.trim();
     if (code.isEmpty) return;
     final matches = _visible(ref.read(posCatalogProvider).value ?? const []);
     if (matches.isEmpty) {
-      _toast('No product matches “$code”.');
+      _toast(l10n.noProductMatches(code));
       return;
     }
     await _add(matches.first);
@@ -74,7 +80,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
   Future<void> _add(CatalogEntry entry) async {
     if (!entry.sellable) {
-      _toast('${entry.medicine.tradeName} has no units configured yet.');
+      _toast(AppLocalizations.of(context).noUnitsYet(entry.medicine.tradeName));
       return;
     }
     ref
@@ -94,15 +100,64 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
+  /// Handle camera scan result
+  Future<void> _handleCameraScan() async {
+    final l10n = AppLocalizations.of(context);
+    final code = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (context) => const ScannerScreen()),
+    );
+
+    if (code == null) return;
+
+    // Use the same resolution logic as keyboard search
+    final result = resolveScan(
+      code: code,
+      findByBarcode: (barcode) {
+        final catalog = ref.read(posCatalogProvider).value ?? const [];
+        for (final entry in catalog) {
+          if (entry.medicine.barcode == barcode) {
+            return entry.medicine.id;
+          }
+        }
+        return null;
+      },
+    );
+
+    switch (result) {
+      case ScanResult.addProduct:
+        // Find the entry and add to cart
+        final catalog = ref.read(posCatalogProvider).value ?? const [];
+        for (final entry in catalog) {
+          if (entry.medicine.barcode == code) {
+            await _add(entry);
+            break;
+          }
+        }
+        break;
+      case ScanResult.showNotFound:
+        _toast(l10n.noProductMatches(code));
+        break;
+      case ScanResult.ignoreEmpty:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final catalog = ref.watch(posCatalogProvider);
     final cart = ref.watch(cartProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Point of Sale'),
+        title: Text(l10n.pointOfSale),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner),
+            onPressed: _handleCameraScan,
+            tooltip: l10n.scanBarcode,
+          ),
           // Retail / Wholesale switch, the cart's mode. Changing it re-prices
           // every line already on the ticket.
           Padding(
@@ -110,11 +165,11 @@ class _POSScreenState extends ConsumerState<POSScreen> {
             child: SegmentedButton<SaleMode>(
               showSelectedIcon: false,
               style: const ButtonStyle(visualDensity: VisualDensity.compact),
-              segments: const [
-                ButtonSegment(value: SaleMode.retail, label: Text('Retail')),
+              segments: [
+                ButtonSegment(value: SaleMode.retail, label: Text(l10n.retail)),
                 ButtonSegment(
                   value: SaleMode.wholesale,
-                  label: Text('Wholesale'),
+                  label: Text(l10n.wholesale),
                 ),
               ],
               selected: {cart.mode},
@@ -142,7 +197,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                       // system beep; we handle submit ourselves.
                       onSubmitted: (_) => _onSearchSubmitted(),
                       decoration: InputDecoration(
-                        hintText: 'Scan or search trade / generic / barcode',
+                        hintText: l10n.searchHint,
                         prefixIcon: const Icon(Icons.search),
                         suffixIcon: _query.isEmpty
                             ? null
@@ -286,6 +341,7 @@ class _CartPane extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final controller = ref.read(cartProvider.notifier);
 
     return Column(
@@ -294,7 +350,7 @@ class _CartPane extends ConsumerWidget {
           child: cart.isEmpty
               ? Center(
                   child: Text(
-                    'Tap a product to start a sale.',
+                    l10n.tapToStart,
                     style: theme.textTheme.bodySmall,
                   ),
                 )
@@ -330,7 +386,7 @@ class _CartPane extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _money(context, 'Subtotal', cart.subtotalPya),
+              _money(context, l10n.subtotal, cart.subtotalPya),
               _DiscountRow(
                 current: cart.discountPya,
                 invalid: cart.discountExceedsSubtotal,
@@ -340,7 +396,7 @@ class _CartPane extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Total', style: theme.textTheme.titleMedium),
+                  Text(l10n.total, style: theme.textTheme.titleMedium),
                   Text(
                     '${formatMoney(cart.totalPya)} K',
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -353,7 +409,7 @@ class _CartPane extends ConsumerWidget {
               FilledButton.icon(
                 onPressed: cart.isEmpty ? null : onCheckout,
                 icon: const Icon(Icons.credit_card),
-                label: const Text('Checkout'),
+                label: Text(l10n.checkout),
               ),
             ],
           ),
@@ -542,7 +598,7 @@ class _DiscountRowState extends ConsumerState<_DiscountRow> {
         LengthLimitingTextInputFormatter(12),
       ],
       decoration: InputDecoration(
-        labelText: 'Discount',
+        labelText: AppLocalizations.of(context).discount,
         suffixText: 'K',
         isDense: true,
         errorText: widget.invalid ? 'More than the subtotal' : _error,

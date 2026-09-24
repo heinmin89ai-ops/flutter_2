@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/locale/locale_controller.dart';
 import '../../../core/rbac/permission.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../routing/routes.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../license/application/license_providers.dart';
@@ -25,13 +27,16 @@ class DashboardScreen extends ConsumerWidget {
     final license = ref.watch(licenseProvider);
     final maySeeCost = ref.watch(permissionProvider(Permission.viewCostPrice));
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pharmacy POS'),
+        title: Text(l10n.appTitle),
         actions: [
+          _LanguageSwitcher(),
+          const SizedBox(width: 8),
           IconButton(
-            tooltip: 'Sign out',
+            tooltip: l10n.signOut,
             onPressed: () => ref.read(authProvider.notifier).signOut(),
             icon: const Icon(Icons.logout),
           ),
@@ -43,8 +48,8 @@ class DashboardScreen extends ConsumerWidget {
           Card(
             child: ListTile(
               leading: const Icon(Icons.person_outline),
-              title: Text('Signed in as ${user?.username ?? '—'}'),
-              subtitle: Text('Role: ${user?.role.name ?? '—'}'),
+              title: Text(l10n.signedInAs(user?.username ?? '—')),
+              subtitle: Text(l10n.role(user?.role.name ?? '—')),
             ),
           ),
           const SizedBox(height: 8),
@@ -120,6 +125,44 @@ class _ExpiryBanner extends ConsumerWidget {
 
 enum CardTone { neutral, warning }
 
+class _LanguageSwitcher extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+    final l10n = AppLocalizations.of(context);
+
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.language),
+      tooltip: l10n.language,
+      onSelected: (value) {
+        ref.read(localeProvider.notifier).setLocale(value);
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'en',
+          child: Row(
+            children: [
+              if (locale == 'en') const Icon(Icons.check, size: 18),
+              if (locale == 'en') const SizedBox(width: 8),
+              Text(l10n.english),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'my',
+          child: Row(
+            children: [
+              if (locale == 'my') const Icon(Icons.check, size: 18),
+              if (locale == 'my') const SizedBox(width: 8),
+              Text(l10n.myanmar),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// Module entry points the signed-in role may actually open.
 ///
 /// Rendered from the same permissions the router enforces, so the dashboard never
@@ -129,23 +172,24 @@ class _ModuleLinks extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final links = <Widget>[
       if (ref.watch(permissionProvider(Permission.pos)))
         _Link(
           icon: Icons.point_of_sale,
-          label: 'Point of sale',
+          label: l10n.pointOfSale,
           target: AppRoutes.pos,
         ),
       if (ref.watch(permissionProvider(Permission.viewInventory)))
         _Link(
           icon: Icons.inventory_2_outlined,
-          label: 'Inventory',
+          label: l10n.inventory,
           target: AppRoutes.inventory,
         ),
       if (ref.watch(permissionProvider(Permission.manageInventory)))
         _Link(
           icon: Icons.note_add_outlined,
-          label: 'Add medicine',
+          label: l10n.addMedicine,
           target: AppRoutes.addMedicine,
         ),
       if (ref.watch(permissionProvider(Permission.managePurchases)))
@@ -157,31 +201,31 @@ class _ModuleLinks extends ConsumerWidget {
       if (ref.watch(permissionProvider(Permission.manageCredit))) ...[
         _Link(
           icon: Icons.savings_outlined,
-          label: 'Customer credit',
+          label: l10n.customerCredit,
           target: AppRoutes.customerCredit,
         ),
         _Link(
           icon: Icons.payments_outlined,
-          label: 'Supplier payables',
+          label: l10n.supplierCredit,
           target: AppRoutes.supplierCredit,
         ),
       ],
       if (ref.watch(permissionProvider(Permission.manageExpenses)))
         _Link(
           icon: Icons.receipt_long_outlined,
-          label: 'Expenses',
+          label: l10n.expenses,
           target: AppRoutes.expenses,
         ),
       if (ref.watch(permissionProvider(Permission.viewProfitReports)))
         _Link(
           icon: Icons.insights_outlined,
-          label: 'Reports',
+          label: l10n.reports,
           target: AppRoutes.reports,
         ),
       if (ref.watch(permissionProvider(Permission.manageBackup)))
         _Link(
           icon: Icons.backup_outlined,
-          label: 'Backup & restore',
+          label: l10n.backupRestore,
           target: AppRoutes.backup,
         ),
     ];

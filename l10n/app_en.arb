@@ -1,0 +1,61 @@
+{
+  "@@locale": "en",
+  "appTitle": "Pharmacy POS",
+  "@appTitle": {
+    "description": "The application title shown in the app bar."
+  },
+  "pointOfSale": "Point of Sale",
+  "checkout": "Checkout",
+  "retail": "Retail",
+  "wholesale": "Wholesale",
+  "discount": "Discount",
+  "total": "Total",
+  "subtotal": "Subtotal",
+  "inventory": "Inventory",
+  "addMedicine": "Add medicine",
+  "customerCredit": "Customer credit",
+  "supplierCredit": "Supplier credit",
+  "expenses": "Expenses",
+  "reports": "Reports",
+  "backupRestore": "Backup & restore",
+  "signOut": "Sign out",
+  "language": "Language",
+  "english": "English",
+  "myanmar": "Myanmar",
+  "dashboard": "Dashboard",
+  "signedInAs": "Signed in as {username}",
+  "@signedInAs": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "role": "Role: {role}",
+  "@role": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "searchHint": "Scan or search trade / generic / barcode",
+  "tapToStart": "Tap a product to start a sale.",
+  "noProductMatches": "No product matches {code}.",
+  "@noProductMatches": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "scanBarcode": "Scan barcode",
+  "noUnitsYet": "{name} has no units configured yet.",
+  "@noUnitsYet": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "@@locale": "my",
+  "appTitle": "ဆေးဆိုင် POS",
+  "pointOfSale": "ရောင်းချစနစ်",
+  "checkout": "ငွေရှင်းရန်",
+  "retail": "လက်လီ",
+  "wholesale": "လက်ကား",
+  "discount": "လျှော့ဈေး",
+  "total": "စုစုပေါင်း",
+  "subtotal": "ကြားစုစုပေါင်း",
+  "inventory": "ကုန်ပစ္စည်းစာရင်း",
+  "addMedicine": "ဆေးထည့်ရန်",
+  "customerCredit": "ဖောက်သည်အကြွေး",
+  "supplierCredit": "ပေးသွင်းသူအကြွေး",
+  "expenses": "အသုံးစရိတ်",
+  "reports": "အစီရင်ခံစာများ",
+  "backupRestore": "အရန်သိမ်းခြင်းနှင့်ပြန်လည်ထူထောင်ခြင်း",
+  "signOut": "ထွက်ရန်",
+  "language": "ဘာသာစကား",
+  "english": "အင်္ဂလိပ်",
+  "myanmar": "မြန်မာ",
+  "dashboard": "ဒက်ရှ်ဘုတ်",
+  "signedInAs": "{username} ဖြင့်ဝင်ရောက်ထားသည်",
+  "@signedInAs": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "role": "အခန်းကဏ္ဍ: {role}",
+  "@role": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "searchHint": "ဆေးနာမည် သို့မဟုတ် ဘားကုဒ် ရှာရန်",
+  "tapToStart": "ရောင်းရန် ပစ္စည်းကို နှိပ်ပါ။",
+  "noProductMatches": "{code} နှင့်ကိုက်ညီသော ပစ္စည်းမတွေ့ပါ။",
+  "@noProductMatches": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "scanBarcode": "ဘားကုဒ် စကင်ဖတ်ရန်",
+  "noUnitsYet": "{name} အတွက် ယူနစ် သတ်မှတ်ထားခြင်း မရှိသေးပါ။",
+  "@noUnitsYet": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
+}

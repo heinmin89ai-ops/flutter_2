@@ -36,6 +36,11 @@ dependencies:
   # forces into the graph, so this is a direct dependency on the copy that is
   # resolved anyway rather than a second, conflicting one.
   archive: ^4.3.0
+  intl: ^0.20.3
+  flutter_localizations:
+    sdk: flutter
+  flutter_local_notifications: ^22.3.1
+  mobile_scanner: ^7.4.2
 
 dev_dependencies:
   flutter_test:
@@ -51,4 +56,5 @@ dev_dependencies:
   sqlite3: ^3.5.2
 
 flutter:
+  generate: true
   uses-material-design: true

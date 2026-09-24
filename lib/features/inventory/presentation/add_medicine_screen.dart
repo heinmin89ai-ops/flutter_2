@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/money.dart';
 import '../../../core/presentation/money_field.dart';
+import '../../scanning/presentation/scanner_screen.dart';
 import '../application/inventory_providers.dart';
 import '../application/unit_hierarchy.dart';
 import '../data/inventory_repository.dart';
@@ -229,6 +230,16 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
     );
   }
 
+  Future<void> _scanBarcode() async {
+    final code = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (context) => const ScannerScreen()),
+    );
+    if (code != null) {
+      _barcode.text = code;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -261,12 +272,20 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            _field(
+            TextFormField(
               controller: _barcode,
-              label: 'Barcode (optional)',
-              helper:
-                  'Scan or type the EAN. Blank for loose repackaged stock, '
-                  'which is most local medicines.',
+              decoration: InputDecoration(
+                labelText: 'Barcode',
+                helperText: 'Scan or type the EAN. Blank for loose repackaged stock, which is most local medicines.',
+                helperMaxLines: 2,
+                border: const OutlineInputBorder(),
+                isDense: true,
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.qr_code_scanner),
+                  onPressed: _scanBarcode,
+                  tooltip: 'Scan barcode',
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             TextFormField(

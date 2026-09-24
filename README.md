@@ -3,19 +3,15 @@
 Offline-first mobile pharmacy management system (retail & wholesale) for Android
 and iOS. Flutter · Riverpod · drift (SQLite).
 
-**Current status: Phase 5 — credit ledgers, expenses, daily reports and encrypted
-backups.** Two more tables (`credit_transactions`, `expenses`) on top of Phase 4's
-twelve, and schema 3 → 4 — the first migration that *rewrites* data, backfilling
-the ledger from the balances a Phase 4 device already carries. Payments are now
-rows, not silent subtractions, so `current_debt` / `current_payable` are a genuine
-`SUM(debt_added) − SUM(payment_received)` and Phase 4's repair-oracle blind spot is
-gone. Expenses make a real net profit (sales − COGS − expenses) computable; one
-Admin-only dashboard reports today's trading with low-stock and 60-day-expiry
-alerts; and the database exports and restores as a passphrase-encrypted,
-versioned `.pbak` file (AES-256-GCM over PBKDF2). Google Drive upload is deferred
-— the encrypted file is the transport-neutral artifact a Drive adapter wraps
-later. Phases 1–4 delivered the foundation, signed licences, inventory and
-purchasing, and sales/POS. Returns and stock write-offs land in Phase 6.
+**Current status: Phase 6 — localisation, expiry notifications and a camera
+scanner.** English + Myanmar (Burmese) UI via `intl` + `flutter_localizations`,
+switchable by the cashier and persisted across restarts; a startup check that
+notifies the shop about batches expiring within 30 days, deduplicated so the same
+batch pings at most once per calendar day; and `mobile_scanner` wired into the
+till's AppBar and the add-medicine barcode field, running through the same exact-
+barcode decision as the HID keyboard path. No database change this phase — schema
+stays at 4. Phase 5's credit ledgers, expenses, daily reports and encrypted
+backups remain the last substantive data-model shift.
 
 ---
 
@@ -27,8 +23,9 @@ purchasing, and sales/POS. Returns and stock write-offs land in Phase 6.
 | 2 | Signed licences: JWT verification, vendor key generator, expiry enforcement | `feature/phase-2-license-jwt` |
 | 3 | Inventory, multi-unit stock, batches and expiry alerts + stock-in, suppliers and payables (the spec's Modules 3 and 4) | `feature/phase-3-inventory-purchases` |
 | 4 | Sales & POS: FEFO deduction, search/scan, retail/wholesale, voucher printing (the spec's Module 5) | `feature/phase-4-sales-pos` |
-| 5 | Credit ledger (receivables & payables), expenses, daily reports, encrypted database backup (the spec's Modules 6 and 7) | this branch |
-| 6 onward | Returns and stock adjustments (write-offs, transfers), ageing reports, Drive backup adapter | planned |
+| 5 | Credit ledger (receivables & payables), expenses, daily reports, encrypted database backup (the spec's Modules 6 and 7) | `feature/phase-5-credit-reports-backup` |
+| 6 | Localisation (English + Myanmar), local expiry notifications, camera barcode scanner | this branch |
+| 7 onward | Returns and stock adjustments (write-offs, transfers), ageing reports, Drive backup adapter | planned |
 
 The spec's Phase 2 brief (repositories, state management, boot flow, router
 redirects, activation and login screens) was already implemented in Phase 1, so
@@ -54,6 +51,7 @@ decision record.
 ```bash
 flutter pub get
 dart run build_runner build          # regenerates app_database.g.dart after any table change
+flutter gen-l10n                     # regenerates lib/l10n/generated/ after any l10n/*.arb change
 flutter analyze
 flutter test
 flutter run
@@ -61,7 +59,9 @@ flutter run
 
 `build_runner` must be re-run after editing anything under
 `lib/core/database/tables/` — the generated `app_database.g.dart` is committed so
-a fresh clone builds without a codegen step.
+a fresh clone builds without a codegen step. The same applies to
+`flutter gen-l10n` and the `l10n/*.arb` translation files: the generated
+localisation classes under `lib/l10n/generated/` are committed.
 
 ---
 
@@ -145,7 +145,7 @@ testable without a database or a widget tree.
 ## Testing
 
 ```bash
-flutter test                    # 361 cases
+flutter test                    # 381 cases
 flutter test --coverage         # lcov.info for CI
 python3 tools/license_generator.py --self-test   # 7 cases
 ```
@@ -207,6 +207,16 @@ Coverage is concentrated where the risk is:
   made the *denial* half provable for the first time: `/pos` is legitimately held
   by both roles, so before Phase 5 no route could demonstrate a cashier being
   refused.
+- `test/core/locale/locale_controller_test.dart` — the locale persists through
+  the SecureStore seam and rehydrates on the next boot, and the default for a
+  fresh install is `en` (not "whatever the platform reports").
+- `test/features/notifications/expiry_alert_service_test.dart` — the 30-day
+  window is inclusive at the boundary, and the same batch alerts at most once per
+  calendar day while a new day re-arms it. This dedup is the entire reason the
+  alert is usable rather than noise.
+- `test/features/scanning/scan_resolution_test.dart` — a camera read and a HID
+  scan land on the same three answers (add / not-found / ignore-blank), a blank
+  code short-circuits before any lookup, and whitespace is trimmed first.
 
 `AppDatabase.forTesting(NativeDatabase.memory())` and `MemoryKeyValueStore` are
 the seams; neither requires platform channels, so the whole suite runs headless.
@@ -235,11 +245,12 @@ Deliberate decisions, not oversights — each is recorded in the ADR:
   username minimum; enforcing a 6-character floor is `SetupAdminScreen`'s rule,
   and a raw 4-digit PIN remains weak against a copied database even at 120k
   PBKDF2 rounds.
-- **ESC/POS transport and camera scanning are absent.** Phase 4 renders a voucher
-  to PDF and reads a hardware (HID) barcode scanner through the search box, both
-  of which work offline with no new permission. Printing that PDF to an actual
-  thermal roll (ESC/POS, and a Unicode font for Burmese names) and the
-  `mobile_scanner` camera path are deferred to the on-device pass.
+- **ESC/POS transport is absent.** Phase 4 renders a voucher to PDF and reads a
+  hardware (HID) barcode scanner through the search box; Phase 6 added the
+  `mobile_scanner` camera path (till AppBar + add-medicine barcode field). What
+  remains deferred to the on-device pass is printing that PDF to an actual thermal
+  roll (ESC/POS transport, and a Unicode font so Burmese shop/product names
+  render — the `pdf` default fonts have no Myanmar glyphs).
 - **Backup is an encrypted file, not a Drive upload.** Phase 5 ships the whole
   pipeline — `VACUUM INTO` snapshot, PBKDF2 + AES-256-GCM envelope, in-app
   restore — writing `.pbak` files to the app's documents directory. The Drive
