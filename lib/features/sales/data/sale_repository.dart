@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/database/tables/credit_transactions.dart';
 import '../../../core/database/tables/sales.dart';
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../../core/money.dart';
 import '../../credit/application/ledger_service.dart';
 import '../../inventory/application/unit_hierarchy.dart';
@@ -115,10 +116,16 @@ class SaleRepository {
   }) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
-      throw const SaleRejectException('Customer name is required.');
+      throw const SaleRejectException(
+        'saleCustomerNameRequired',
+        'Customer name is required.',
+      );
     }
     if (creditLimitPya < 0) {
-      throw const SaleRejectException('Credit limit cannot be negative.');
+      throw const SaleRejectException(
+        'saleCreditLimitNotNegative',
+        'Credit limit cannot be negative.',
+      );
     }
     final existing = await _findCustomerByName(trimmed);
     if (existing != null) return existing;
@@ -173,14 +180,19 @@ class SaleRepository {
     DateTime? at,
   }) async {
     if (amountPya <= 0) {
-      throw const SaleRejectException('Payment must be greater than zero.');
+      throw const SaleRejectException(
+        'salePaymentMustBePositive',
+        'Payment must be greater than zero.',
+      );
     }
     await _db.transaction(() async {
       final customer = await _requireCustomer(customerId);
       if (amountPya > customer.currentDebt) {
+        final balance = formatMoney(customer.currentDebt);
         throw SaleRejectException(
-          'Payment exceeds the outstanding balance of '
-          '${formatMoney(customer.currentDebt)} kyat.',
+          'salePaymentExceedsBalance',
+          'Payment exceeds the outstanding balance of $balance kyat.',
+          {'balance': balance},
         );
       }
       await (_db.update(
@@ -232,7 +244,7 @@ class SaleRepository {
     DateTime? at,
   }) async {
     if (lines.isEmpty) {
-      throw const SaleRejectException('The cart is empty.');
+      throw const SaleRejectException('saleCartIsEmpty', 'The cart is empty.');
     }
     // Validate the shape of every line before touching the database, and merge
     // duplicate medicines' batch reads so we never double-consume a batch across
@@ -241,16 +253,25 @@ class SaleRepository {
       _validateLine(line);
     }
     if (discountPya < 0) {
-      throw const SaleRejectException('Discount cannot be negative.');
+      throw const SaleRejectException(
+        'saleDiscountNotNegative',
+        'Discount cannot be negative.',
+      );
     }
     if (receivedPya < 0) {
-      throw const SaleRejectException('Received amount cannot be negative.');
+      throw const SaleRejectException(
+        'saleReceivedNotNegative',
+        'Received amount cannot be negative.',
+      );
     }
     final subtotal = lines.fold<Pya>(0, (sum, l) => sum + l.lineTotalPya);
     if (discountPya > subtotal) {
+      final discount = formatMoney(discountPya);
+      final subtotalLabel = formatMoney(subtotal);
       throw SaleRejectException(
-        'Discount of ${formatMoney(discountPya)} exceeds the subtotal of '
-        '${formatMoney(subtotal)}.',
+        'saleDiscountExceedsSubtotal',
+        'Discount of $discount exceeds the subtotal of $subtotalLabel.',
+        {'discount': discount, 'subtotal': subtotalLabel},
       );
     }
     final total = subtotal - discountPya;
@@ -260,6 +281,7 @@ class SaleRepository {
 
     if (onCredit && customerId == null) {
       throw const SaleRejectException(
+        'saleBalanceNeedsCustomer',
         'A sale with an unpaid balance must be charged to a customer.',
       );
     }
@@ -267,8 +289,9 @@ class SaleRepository {
       // A wallet transfer is settled or it is not; a half-paid KPay voucher is a
       // credit sale wearing a payment method's clothes and would hide a debtor.
       throw const SaleRejectException(
+        'salePartialPaymentNotKPay',
         'Partial payment cannot be a KPay sale. Record the balance as a credit '
-        'or take full payment.',
+            'or take full payment.',
       );
     }
     // Paid-in-full but the mode disagrees: never a hard error, just no change on
@@ -387,10 +410,18 @@ class SaleRepository {
         final customer = await _requireCustomer(customerId!);
         final projected = customer.currentDebt + credit;
         if (projected > customer.creditLimit) {
+          final projectedLabel = formatMoney(projected);
+          final limitLabel = formatMoney(customer.creditLimit);
           throw SaleRejectException(
+            'saleOverCreditLimit',
             '${customer.name} is over their credit limit: this sale would take '
-            'their balance to ${formatMoney(projected)}, above the '
-            '${formatMoney(customer.creditLimit)} limit.',
+                'their balance to $projectedLabel, above the '
+                '$limitLabel limit.',
+            {
+              'name': customer.name,
+              'projected': projectedLabel,
+              'limit': limitLabel,
+            },
           );
         }
         await (_db.update(_db.customers)
@@ -591,18 +622,28 @@ class SaleRepository {
 
   void _validateLine(NewSaleLine line) {
     if (line.quantity <= 0) {
-      throw const SaleRejectException('Quantity must be at least 1.');
+      throw const SaleRejectException(
+        'saleQuantityAtLeast1',
+        'Quantity must be at least 1.',
+      );
     }
     if (line.unitPricePya < 0) {
-      throw const SaleRejectException('Unit price cannot be negative.');
+      throw const SaleRejectException(
+        'saleUnitPriceNotNegative',
+        'Unit price cannot be negative.',
+      );
     }
     if (line.conversionFactor < 1) {
       throw const SaleRejectException(
+        'saleFactorAtLeast1',
         'Unit conversion factor must be 1 or more.',
       );
     }
     if (line.unitName.trim().isEmpty) {
-      throw const SaleRejectException('A sale line must name its unit.');
+      throw const SaleRejectException(
+        'saleLineMustNameUnit',
+        'A sale line must name its unit.',
+      );
     }
   }
 
@@ -618,10 +659,18 @@ class SaleRepository {
   Future<Customer> _requireCustomer(int id) async {
     final customer = await customerById(id);
     if (customer == null) {
-      throw SaleRejectException('Customer $id does not exist.');
+      throw SaleRejectException(
+        'saleCustomerDoesNotExist',
+        'Customer $id does not exist.',
+        {'id': '$id'},
+      );
     }
     if (!customer.isActive) {
-      throw SaleRejectException('${customer.name} is not an active customer.');
+      throw SaleRejectException(
+        'saleCustomerNotActive',
+        '${customer.name} is not an active customer.',
+        {'name': customer.name},
+      );
     }
     return customer;
   }
@@ -635,16 +684,42 @@ class SaleRepository {
 DateTime _dayOnly(DateTime value) =>
     DateTime(value.year, value.month, value.day);
 
-class SaleRejectException implements Exception {
-  const SaleRejectException(this.message);
-
-  final String message;
+/// A sale the repository refuses to write.
+///
+/// Carries a `sale*` localisation key rather than prose, so the till renders the
+/// refusal in the cashier's language; [debugMessage] keeps the English sentence
+/// this exception used to show, which is what logs (and the tests that assert on
+/// the wording) still read. [message] is retained as an alias for that English
+/// text so older call sites keep compiling.
+class SaleRejectException implements LocalizedError {
+  const SaleRejectException(
+    this.errorKey,
+    this.debugMessage, [
+    this.errorArgs = const {},
+  ]);
 
   @override
-  String toString() => 'SaleRejectException: $message';
+  final String errorKey;
+
+  @override
+  final String debugMessage;
+
+  @override
+  final Map<String, String> errorArgs;
+
+  /// [debugMessage] under the name this exception has always exposed.
+  String get message => debugMessage;
+
+  @override
+  String toString() => 'SaleRejectException: $debugMessage';
 }
 
-class SaleShortageException implements Exception {
+/// A line the shelf cannot fill, named so the cashier can act on it.
+///
+/// The allocator's [FefoShortageException] is bare numbers; the repository
+/// catches it inside the transaction and re-throws this with the product's trade
+/// name, because "only 4 left" means nothing at the till without saying of what.
+class SaleShortageException implements LocalizedError {
   const SaleShortageException({
     required this.medicine,
     required this.requested,
@@ -660,6 +735,22 @@ class SaleShortageException implements Exception {
   final int available;
 
   @override
-  String toString() =>
+  String get errorKey => 'saleProductShortage';
+
+  @override
+  Map<String, String> get errorArgs => {
+    'product': medicine,
+    'requested': requested.toString(),
+    'available': available.toString(),
+  };
+
+  @override
+  String get debugMessage =>
       'SaleShortageException: $medicine — only $available of $requested in stock';
+
+  /// [debugMessage] under the name older call sites read.
+  String get message => debugMessage;
+
+  @override
+  String toString() => debugMessage;
 }

@@ -7,6 +7,7 @@ import 'package:archive/archive.dart';
 import 'package:pointycastle/export.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/l10n/l10n_bridge.dart';
 
 /// A completed backup, ready to hand to the OS share sheet or a cloud adapter.
 class BackupArtifact {
@@ -201,7 +202,7 @@ class BackupService {
     final archive = ZipDecoder().decodeBytes(zip);
     final entry = archive.find(_manifestEntryName);
     if (entry == null) {
-      throw const BackupFormatException('Backup carries no manifest.');
+      throw const BackupFormatException('backupNoManifest');
     }
     final decoded = jsonDecode(
       utf8.decode(entry.content as List<int>),
@@ -227,7 +228,7 @@ class BackupService {
     final archive = ZipDecoder().decodeBytes(zip);
     final dbFile = archive.find(_dbEntryName);
     if (dbFile == null) {
-      throw const BackupFormatException('Backup is missing the database file.');
+      throw const BackupFormatException('backupMissingDatabase');
     }
     return Uint8List.fromList(dbFile.content as List<int>);
   }
@@ -240,17 +241,20 @@ class BackupService {
     final password = _requirePassphrase(passphrase);
     if (data.length <
         _magic.length + 1 + _saltBytes + 4 + _nonceBytes + _macBytes) {
-      throw const BackupFormatException('Backup file is truncated.');
+      throw const BackupFormatException('backupTruncated');
     }
     var pos = 0;
     for (final b in _magic) {
       if (data[pos++] != b) {
-        throw const BackupFormatException('Not a pharmacy backup file.');
+        throw const BackupFormatException('backupNotPharmacyFile');
       }
     }
     final version = data[pos++];
     if (version != _version) {
-      throw BackupFormatException('Unsupported backup version $version.');
+      throw BackupFormatException(
+        'backupUnsupportedVersion',
+        {'version': '$version'},
+      );
     }
     final salt = data.sublist(pos, pos + _saltBytes);
     pos += _saltBytes;
@@ -270,9 +274,7 @@ class BackupService {
         forEncryption: false,
       );
     } on InvalidCipherTextException {
-      throw const BackupAuthException(
-        'Wrong passphrase, or the backup was modified.',
-      );
+      throw const BackupAuthException('backupWrongPassphrase');
     }
     return zip;
   }
@@ -355,9 +357,7 @@ class BackupService {
 
   String _requirePassphrase(String value) {
     if (value.trim().isEmpty) {
-      throw const BackupRejectException(
-        'A backup passphrase is required; unencrypted exports are not offered.',
-      );
+      throw const BackupRejectException('backupPassphraseRequired');
     }
     return value;
   }
@@ -392,23 +392,69 @@ class BackupService {
       data[offset + 3];
 }
 
-class BackupRejectException implements Exception {
-  const BackupRejectException(this.message);
-  final String message;
+/// Backup rejections and failures. Each carries a `backup*` localisation key
+/// instead of user-facing prose; [debugMessage] keeps the original English for
+/// logs, and the presentation layer renders [errorKey] via `backupErrors`.
+class BackupRejectException implements LocalizedError {
+  const BackupRejectException(this.errorKey, [this.errorArgs = const {}]);
+
   @override
-  String toString() => 'BackupRejectException: $message';
+  final String errorKey;
+
+  @override
+  final Map<String, String> errorArgs;
+
+  @override
+  String get debugMessage => switch (errorKey) {
+    'backupPassphraseRequired' =>
+      'A backup passphrase is required; unencrypted exports are not offered.',
+    _ => errorKey,
+  };
+
+  @override
+  String toString() => 'BackupRejectException: $debugMessage';
 }
 
-class BackupFormatException implements Exception {
-  const BackupFormatException(this.message);
-  final String message;
+class BackupFormatException implements LocalizedError {
+  const BackupFormatException(this.errorKey, [this.errorArgs = const {}]);
+
   @override
-  String toString() => 'BackupFormatException: $message';
+  final String errorKey;
+
+  @override
+  final Map<String, String> errorArgs;
+
+  @override
+  String get debugMessage => switch (errorKey) {
+    'backupNoManifest' => 'Backup carries no manifest.',
+    'backupMissingDatabase' => 'Backup is missing the database file.',
+    'backupTruncated' => 'Backup file is truncated.',
+    'backupNotPharmacyFile' => 'Not a pharmacy backup file.',
+    'backupUnsupportedVersion' =>
+      'Unsupported backup version ${errorArgs['version']}.',
+    _ => errorKey,
+  };
+
+  @override
+  String toString() => 'BackupFormatException: $debugMessage';
 }
 
-class BackupAuthException implements Exception {
-  const BackupAuthException(this.message);
-  final String message;
+class BackupAuthException implements LocalizedError {
+  const BackupAuthException(this.errorKey, [this.errorArgs = const {}]);
+
   @override
-  String toString() => 'BackupAuthException: $message';
+  final String errorKey;
+
+  @override
+  final Map<String, String> errorArgs;
+
+  @override
+  String get debugMessage => switch (errorKey) {
+    'backupWrongPassphrase' =>
+      'Wrong passphrase, or the backup was modified.',
+    _ => errorKey,
+  };
+
+  @override
+  String toString() => 'BackupAuthException: $debugMessage';
 }

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/tables/users.dart';
+import '../../../core/l10n/l10n_bridge.dart';
 import '../application/password_service.dart';
 
 /// Result of a credential check, kept deliberately coarse.
@@ -163,18 +164,30 @@ class UserRepository {
 }
 
 /// Thrown when deactivating the only remaining active admin.
-class LastAdminException implements Exception {
+class LastAdminException implements LocalizedError {
   @override
-  String toString() => 'Cannot deactivate the last active admin account.';
+  String get errorKey => 'authLastAdminError';
+
+  @override
+  Map<String, String> get errorArgs => const {};
+
+  @override
+  String get debugMessage => 'Cannot deactivate the last active admin account.';
 }
 
-class UserConflictException implements Exception {
+class UserConflictException implements LocalizedError {
   const UserConflictException(this.username);
 
   final String username;
 
   @override
-  String toString() => 'Username "$username" is already taken.';
+  String get errorKey => 'authUsernameTaken';
+
+  @override
+  Map<String, String> get errorArgs => {'username': username};
+
+  @override
+  String get debugMessage => 'Username "$username" is already taken.';
 }
 
 /// Validly-formed hash of a value no user can type, used to equalise the cost of

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../../core/money.dart';
 import '../../../core/presentation/money_field.dart';
 import '../../scanning/presentation/scanner_screen.dart';
@@ -134,12 +135,15 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
   /// clerk sees the problem next to the field that caused it instead of after a
   /// failed save.
   String? _unitError() {
-    if (_units.isEmpty) return 'Add at least one unit.';
+    final l10n = context.l10n;
+    if (_units.isEmpty) return l10n.invAddAtLeastOneUnit;
     for (final unit in _units) {
-      if (unit.unitName.trim().isEmpty) return 'Every unit needs a name.';
-      if (unit.factor < 1) return '"${unit.unitName}" must hold whole pieces.';
+      if (unit.unitName.trim().isEmpty) return l10n.invEveryUnitNeedsName;
+      if (unit.factor < 1) {
+        return l10n.invUnitMustHoldWholePieces(unit.unitName);
+      }
       if (unit.retailPya == null) {
-        return 'Set the retail price for "${unit.unitName}".';
+        return l10n.invRetailPriceForUnit(unit.unitName);
       }
     }
     try {
@@ -154,7 +158,7 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
           ),
       ]);
     } on UnitConfigException catch (e) {
-      return e.message;
+      return l10n.describe(e);
     }
     return null;
   }
@@ -209,7 +213,9 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = e.detail.isEmpty ? 'A medicine name is required.' : e.detail;
+        // Both flavours (name required, barcode taken) carry localisation keys
+        // now, so one resolver call renders them.
+        _error = context.l10n.describe(e);
       });
       return;
     }
@@ -243,8 +249,13 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? 'Edit medicine' : 'Add medicine')),
+      appBar: AppBar(
+        title: Text(
+          _isEdit ? l10n.invEditMedicineTitle : l10n.invAddMedicineTitle,
+        ),
+      ),
       body: Form(
         key: _form,
         child: ListView(
@@ -252,22 +263,28 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
           children: [
             _field(
               controller: _tradeName,
-              label: 'Trade name',
+              label: l10n.invTradeName,
               validator: (value) => (value ?? '').trim().isEmpty
-                  ? 'The name on the shelf is required'
+                  ? l10n.invTradeNameRequired
                   : null,
             ),
             const SizedBox(height: 12),
-            _field(controller: _genericName, label: 'Generic name (optional)'),
+            _field(
+              controller: _genericName,
+              label: l10n.invGenericNameOptional,
+            ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
-                  child: _field(controller: _category, label: 'Category'),
+                  child: _field(controller: _category, label: l10n.invCategory),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _field(controller: _shelf, label: 'Shelf location'),
+                  child: _field(
+                    controller: _shelf,
+                    label: l10n.invShelfLocation,
+                  ),
                 ),
               ],
             ),
@@ -275,15 +292,15 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
             TextFormField(
               controller: _barcode,
               decoration: InputDecoration(
-                labelText: 'Barcode',
-                helperText: 'Scan or type the EAN. Blank for loose repackaged stock, which is most local medicines.',
+                labelText: l10n.invBarcode,
+                helperText: l10n.invBarcodeHelper,
                 helperMaxLines: 2,
                 border: const OutlineInputBorder(),
                 isDense: true,
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.qr_code_scanner),
                   onPressed: _scanBarcode,
-                  tooltip: 'Scan barcode',
+                  tooltip: l10n.scanBarcode,
                 ),
               ),
             ),
@@ -292,10 +309,8 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
               controller: _threshold,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: 'Low-stock alert at (optional)',
-                helperText:
-                    'Counted in the smallest unit. Blank means no alert for '
-                    'this item.',
+                labelText: l10n.invLowStockAlertAt,
+                helperText: l10n.invLowStockAlertHelper,
                 helperMaxLines: 2,
                 border: const OutlineInputBorder(),
                 isDense: true,
@@ -307,20 +322,19 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
             Row(
               children: [
                 Expanded(
-                  child: Text('Units', style: theme.textTheme.titleMedium),
+                  child: Text(
+                    l10n.invUnitsSection,
+                    style: theme.textTheme.titleMedium,
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: _addUnit,
                   icon: const Icon(Icons.add),
-                  label: const Text('Add unit'),
+                  label: Text(l10n.invAddUnit),
                 ),
               ],
             ),
-            Text(
-              'Largest package first. Exactly one unit must convert to 1 — '
-              'that is the unit stock is counted in.',
-              style: theme.textTheme.bodySmall,
-            ),
+            Text(l10n.invUnitsSectionHint, style: theme.textTheme.bodySmall),
             const SizedBox(height: 8),
             for (var index = 0; index < _units.length; index++)
               _UnitTile(
@@ -348,7 +362,7 @@ class _AddMedicineScreenState extends ConsumerState<AddMedicineScreen> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(_isEdit ? 'Save changes' : 'Save medicine'),
+                : Text(_isEdit ? l10n.invSaveChanges : l10n.invSaveMedicine),
           ),
         ),
       ),
@@ -419,6 +433,7 @@ class _UnitTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -432,10 +447,10 @@ class _UnitTile extends StatelessWidget {
                 Expanded(
                   child: TextFormField(
                     initialValue: row.unitName,
-                    decoration: const InputDecoration(
-                      labelText: 'Unit name',
-                      hintText: 'Box / Strip / Tablet / Bottle',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.invUnitName,
+                      hintText: l10n.invUnitNameHint,
+                      border: const OutlineInputBorder(),
                       isDense: true,
                     ),
                     onChanged: (value) => row.unitName = value,
@@ -448,7 +463,7 @@ class _UnitTile extends StatelessWidget {
                     initialValue: '${row.factor}',
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: isBase ? 'Equals' : 'Holds',
+                      labelText: isBase ? l10n.invEquals : l10n.invHolds,
                       border: const OutlineInputBorder(),
                       isDense: true,
                     ),
@@ -458,7 +473,7 @@ class _UnitTile extends StatelessWidget {
                 ),
                 if (removable)
                   IconButton(
-                    tooltip: 'Remove this unit',
+                    tooltip: l10n.invRemoveThisUnit,
                     onPressed: onRemove,
                     icon: const Icon(Icons.close),
                   ),
@@ -470,7 +485,7 @@ class _UnitTile extends StatelessWidget {
               children: [
                 Expanded(
                   child: MoneyField(
-                    label: 'Retail',
+                    label: l10n.retail,
                     suffix: 'K',
                     initialPya: row.retailPya,
                     allowEmpty: false,
@@ -480,7 +495,7 @@ class _UnitTile extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: MoneyField(
-                    label: 'Wholesale',
+                    label: l10n.wholesale,
                     suffix: 'K',
                     initialPya: row.wholesalePya,
                     onChanged: (value) => row.wholesalePya = value,
@@ -492,7 +507,7 @@ class _UnitTile extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'Smallest unit — batches are counted in it.',
+                  l10n.invSmallestUnitNote,
                   style: theme.textTheme.bodySmall,
                 ),
               ),

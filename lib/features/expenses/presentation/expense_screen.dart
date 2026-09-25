@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../../core/money.dart';
 import '../../../core/presentation/money_field.dart';
 import '../../../core/rbac/permission.dart';
@@ -36,47 +37,50 @@ class _ExpenseScreenState extends ConsumerState<ExpenseScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('New expense'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            MoneyField(
-              label: 'Amount',
-              suffix: 'K',
-              allowEmpty: false,
-              autofocus: true,
-              onChanged: (value) => amount = value,
-            ),
-            const SizedBox(height: 12),
-            _CategoryField(
-              controller: categoryField,
-              suggestions: suggestions,
-              onChanged: (value) => category = value,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: note,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Note (optional)',
-                border: OutlineInputBorder(),
-                isDense: true,
+      builder: (context) {
+        final l10n = context.l10n;
+        return AlertDialog(
+          title: Text(l10n.expNewExpense),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              MoneyField(
+                label: l10n.expAmount,
+                suffix: 'K',
+                allowEmpty: false,
+                autofocus: true,
+                onChanged: (value) => amount = value,
               ),
+              const SizedBox(height: 12),
+              _CategoryField(
+                controller: categoryField,
+                suggestions: suggestions,
+                onChanged: (value) => category = value,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: note,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  labelText: l10n.expNoteOptional,
+                  border: const OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.save),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+        );
+      },
     );
 
     final typed = amount;
@@ -90,36 +94,39 @@ class _ExpenseScreenState extends ConsumerState<ExpenseScreen> {
       );
       ref.read(inventoryRevisionProvider.notifier).bump();
     } on ExpenseRejectException catch (e) {
-      if (mounted) _toast(e.message);
+      if (mounted) _toast(context.l10n.describe(e));
     }
   }
 
   Future<void> _delete(Expense expense) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete this expense?'),
-        content: Text(
-          '${formatMoney(expense.amount)} K · ${expense.category}. '
-          'This cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+      builder: (context) {
+        final l10n = context.l10n;
+        return AlertDialog(
+          title: Text(l10n.expDeleteTitle),
+          content: Text(
+            '${formatMoney(expense.amount)} K · ${expense.category}. '
+            '${l10n.expCannotUndo}',
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.delete),
+            ),
+          ],
+        );
+      },
     );
     if (ok != true) return;
     await ref.read(expenseRepositoryProvider).delete(expense.id);
     ref.read(inventoryRevisionProvider.notifier).bump();
     if (!mounted) return;
-    _toast('Expense deleted.');
+    _toast(context.l10n.expDeleted);
   }
 
   void _toast(String message) {
@@ -130,6 +137,7 @@ class _ExpenseScreenState extends ConsumerState<ExpenseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final list = ref.watch(expenseListProvider);
     final totals = ref.watch(expenseTotalsProvider);
     final mayManage = ref.watch(canManageExpensesProvider);
@@ -139,7 +147,7 @@ class _ExpenseScreenState extends ConsumerState<ExpenseScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Expenses')),
+      appBar: AppBar(title: Text(l10n.expenses)),
       floatingActionButton: mayManage
           ? FloatingActionButton(
               onPressed: _addExpense,
@@ -155,7 +163,7 @@ class _ExpenseScreenState extends ConsumerState<ExpenseScreen> {
             child: totals.maybeWhen(
               data: (cats) => Text(
                 cats.isEmpty
-                    ? 'No expenses recorded yet.'
+                    ? l10n.expNoExpensesRecorded
                     : cats
                           .take(3)
                           .map(
@@ -173,7 +181,7 @@ class _ExpenseScreenState extends ConsumerState<ExpenseScreen> {
               error: (e, _) => Center(child: Text('$e')),
               data: (rows) {
                 if (rows.isEmpty) {
-                  return const Center(child: Text('No expenses yet.'));
+                  return Center(child: Text(l10n.expNoExpensesYet));
                 }
                 return ListView.separated(
                   itemCount: rows.length,
@@ -197,7 +205,7 @@ class _ExpenseScreenState extends ConsumerState<ExpenseScreen> {
                           ),
                           if (mayManage && mayDelete)
                             IconButton(
-                              tooltip: 'Delete',
+                              tooltip: l10n.delete,
                               icon: const Icon(Icons.delete_outline),
                               onPressed: () => _delete(e),
                             ),
@@ -254,9 +262,9 @@ class _CategoryField extends StatelessWidget {
           focusNode: focusNode,
           onChanged: onChanged,
           onSubmitted: (_) => onSubmitted(),
-          decoration: const InputDecoration(
-            labelText: 'Category',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: context.l10n.expCategory,
+            border: const OutlineInputBorder(),
             isDense: true,
           ),
         );

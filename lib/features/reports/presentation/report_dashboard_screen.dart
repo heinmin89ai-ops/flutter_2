@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../../core/money.dart';
 import '../../inventory/application/inventory_providers.dart';
 import '../../inventory/data/inventory_repository.dart';
@@ -26,9 +27,10 @@ class ReportDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final report = ref.watch(dailyReportProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Reports — today')),
+      appBar: AppBar(title: Text(l10n.reportTitleToday)),
       body: RefreshIndicator(
         onRefresh: () async =>
             ref.read(inventoryRevisionProvider.notifier).bump(),
@@ -46,16 +48,14 @@ class ReportDashboardScreen extends ConsumerWidget {
               _StatBand(
                 children: [
                   _StatTile(
-                    label: "Today's sales",
+                    label: l10n.reportSalesToday,
                     value: '${formatMoney(data.totalSalesPya)} K',
-                    caption:
-                        '${data.voucherCount} voucher'
-                        '${data.voucherCount == 1 ? '' : 's'}',
+                    caption: l10n.reportVoucherCount(data.voucherCount),
                   ),
                   _StatTile(
-                    label: 'Net profit',
+                    label: l10n.reportNetProfit,
                     value: '${formatMoney(data.netProfitPya)} K',
-                    caption: 'sales − cost − expenses',
+                    caption: l10n.reportNetProfitFormula,
                     emphasis: data.netProfitPya >= 0
                         ? Emphasis.good
                         : Emphasis.bad,
@@ -66,14 +66,14 @@ class ReportDashboardScreen extends ConsumerWidget {
               _StatBand(
                 children: [
                   _StatTile(
-                    label: 'Receivable',
+                    label: l10n.reportReceivable,
                     value: '${formatMoney(data.receivablePya)} K',
-                    caption: 'owed to the shop',
+                    caption: l10n.reportReceivableCaption,
                   ),
                   _StatTile(
-                    label: 'Payable',
+                    label: l10n.reportPayable,
                     value: '${formatMoney(data.payablePya)} K',
-                    caption: 'the shop owes',
+                    caption: l10n.reportPayableCaption,
                   ),
                 ],
               ),
@@ -82,9 +82,9 @@ class ReportDashboardScreen extends ConsumerWidget {
               const SizedBox(height: 20),
               _AlertSection(
                 icon: Icons.warning_amber_rounded,
-                title: 'Low stock',
+                title: l10n.reportLowStock,
                 count: data.lowStock.length,
-                empty: 'Nothing is below its reorder level.',
+                empty: l10n.reportLowStockEmpty,
                 items: [
                   for (final r in data.lowStock) _lowStockLine(context, r),
                 ],
@@ -92,10 +92,11 @@ class ReportDashboardScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               _AlertSection(
                 icon: Icons.event_busy_outlined,
-                title:
-                    'Expiring within ${ReportRepository.kExpiringWindowDays} days',
+                title: l10n.reportExpiringWithinDays(
+                  ReportRepository.kExpiringWindowDays,
+                ),
                 count: data.expiringSoon.length,
-                empty: 'No batch expires in the window.',
+                empty: l10n.reportExpiringEmpty,
                 items: [
                   for (final b in data.expiringSoon) _expiringLine(context, b),
                 ],
@@ -133,17 +134,18 @@ class ReportDashboardScreen extends ConsumerWidget {
 
   Widget _expiringLine(BuildContext context, StockBatch batch) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final days = batch.daysToExpiry;
     final label = batch.isExpired
-        ? 'expired ${-days}d ago'
-        : '$days day${days == 1 ? '' : 's'} left';
+        ? l10n.reportExpiredDaysAgo(-days)
+        : l10n.reportDaysLeft(days);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           Expanded(
             child: Text(
-              batch.tradeName ?? 'Batch #${batch.batch.id}',
+              batch.tradeName ?? l10n.reportBatchNumber(batch.batch.id),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -177,21 +179,25 @@ class _ProfitBreakdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('How net profit is built', style: theme.textTheme.titleSmall),
+            Text(
+              l10n.reportProfitBuildTitle,
+              style: theme.textTheme.titleSmall,
+            ),
             const SizedBox(height: 8),
-            _line(context, 'Total sales', report.totalSalesPya, positive: true),
-            _line(context, '− Cost of goods', -report.costOfGoodsSoldPya),
-            _line(context, '− Expenses', -report.expensesPya),
+            _line(context, l10n.reportTotalSales, report.totalSalesPya, positive: true),
+            _line(context, l10n.reportMinusCostOfGoods, -report.costOfGoodsSoldPya),
+            _line(context, l10n.reportMinusExpenses, -report.expensesPya),
             const Divider(),
             _line(
               context,
-              'Net profit',
+              l10n.reportNetProfit,
               report.netProfitPya,
               emphasise: true,
               positive: report.netProfitPya >= 0,
@@ -361,7 +367,7 @@ class _AlertSection extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  '…and ${items.length - 8} more',
+                  context.l10n.reportAndMoreCount(items.length - 8),
                   style: theme.textTheme.bodySmall,
                 ),
               ),

@@ -60,5 +60,1211 @@
         "type": "String"
       }
     }
+  },
+  "cancel": "Cancel",
+  "ok": "OK",
+  "save": "Save",
+  "delete": "Delete",
+  "done": "Done",
+  "tryAgain": "Try again",
+  "edit": "Edit",
+  "remove": "Remove",
+  "close": "Close",
+  "record": "Record",
+  "authSignInTitle": "Sign in",
+  "authSignInButton": "Sign in",
+  "authUsernameLabel": "Username",
+  "authSecretLabel": "PIN or password",
+  "authSetupTitle": "Create the owner account",
+  "authSetupBlurb": "This account can see cost prices, edit stock and manage staff. Choose something you will remember — there is no server reset for an offline device.",
+  "authConfirmLabel": "Confirm",
+  "authCreateAccountButton": "Create account",
+  "authSecretHelper": "Minimum {min} characters",
+  "@authSecretHelper": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      }
+    }
+  },
+  "authUsernameMinLength": "Username must be at least {min} characters.",
+  "@authUsernameMinLength": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      }
+    }
+  },
+  "authSecretMinLength": "Use at least {min} characters.",
+  "@authSecretMinLength": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      }
+    }
+  },
+  "authPasswordMismatch": "The two entries do not match.",
+  "authAccountNotFound": "Account not found. Try again.",
+  "authInvalidCredentials": "Username or PIN is incorrect.",
+  "authAccountDisabled": "This account has been disabled.",
+  "authLastAdminError": "Cannot deactivate the last active admin account.",
+  "authUsernameTaken": "Username \"{username}\" is already taken.",
+  "@authUsernameTaken": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "backupEncryptTitle": "Encrypt backup",
+  "backupEncryptBlurb": "The database is zipped and encrypted with this passphrase (AES-256-GCM). It is not stored anywhere — lose it and the backup cannot be restored.",
+  "backupUnlockTitle": "Unlock backup",
+  "backupNext": "Next",
+  "backupUnlockBlurb": "Enter the passphrase this backup was encrypted with.",
+  "backupPassphrase": "Passphrase",
+  "backupReplaceTitle": "Replace everything with this backup?",
+  "backupReplaceFrom": "From: {date}",
+  "@backupReplaceFrom": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupReplaceSchema": "Schema: {version}",
+  "@backupReplaceSchema": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOverwriteWarning": "The current live data will be overwritten. This cannot be undone.",
+  "backupSavedTitle": "Backup saved",
+  "backupSavedBody": "{path}\n\nUnencrypted database size was {size}.",
+  "@backupSavedBody": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoredTitle": "Restored",
+  "backupRestoredBody": "The app is now reading the backup’s data.",
+  "backupFailedWithReason": "Backup failed: {reason}",
+  "@backupFailedWithReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreFailedWithReason": "Restore failed: {reason}",
+  "@backupRestoreFailedWithReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "backupNoFilesFound": "No backup files found in {path}.",
+  "@backupNoFilesFound": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "backupChooseToRestore": "Choose a backup to restore",
+  "backupOwnerOnlyNote": "Only an owner may back up or restore the database.",
+  "backupStorageNote": "Backups are written to {path}.",
+  "@backupStorageNote": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "backupFolderFallback": "the app’s Backups folder",
+  "backupCreateTitle": "Create an encrypted backup",
+  "backupCreateBody": "Snapshots the live database (VACUUM INTO, so it is consistent and WAL-free), zips it, and encrypts it with a passphrase you choose.",
+  "backupCreateAction": "Create backup",
+  "backupRestoreTitle": "Restore from a backup",
+  "backupRestoreBody": "Pick a .pbak file, unlock it, and replace the current database. Everything now on the device is overwritten.",
+  "backupRestoreAction": "Restore",
+  "backupNoManifest": "Backup carries no manifest.",
+  "backupMissingDatabase": "Backup is missing the database file.",
+  "backupTruncated": "Backup file is truncated.",
+  "backupNotPharmacyFile": "Not a pharmacy backup file.",
+  "backupUnsupportedVersion": "Unsupported backup version {version}.",
+  "@backupUnsupportedVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "backupWrongPassphrase": "Wrong passphrase, or the backup was modified.",
+  "backupPassphraseRequired": "A backup passphrase is required; unencrypted exports are not offered.",
+  "creditCustomerTitle": "Customer Credit",
+  "creditSupplierTitle": "Supplier Payables",
+  "creditWordCustomer": "customer",
+  "creditWordSupplier": "supplier",
+  "creditOwes": "owes",
+  "creditIsOwed": "is owed",
+  "creditTotalReceivable": "Total receivable",
+  "creditTotalPayable": "Total payable",
+  "creditSearchHint": "Search {party} name or phone",
+  "@creditSearchHint": {
+    "placeholders": {
+      "party": {
+        "type": "String"
+      }
+    }
+  },
+  "creditBalanceLine": "{balanceWord} {amount} K",
+  "@creditBalanceLine": {
+    "placeholders": {
+      "balanceWord": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditNobodyOwesShop": "Nobody owes the shop right now.",
+  "creditShopOwesNobody": "The shop does not owe any supplier right now.",
+  "creditNoMatches": "No {party} matches “{query}”.",
+  "@creditNoMatches": {
+    "placeholders": {
+      "party": {
+        "type": "String"
+      },
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "creditTotalForSearch": "{label} (this search)",
+  "@creditTotalForSearch": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "creditRecordPaymentTitle": "Record a payment",
+  "creditCustomerOwesNow": "{name} currently owes {amount} K.",
+  "@creditCustomerOwesNow": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditSupplierOwedNow": "{name} is currently owed {amount} K.",
+  "@creditSupplierOwedNow": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditAmountReceived": "Amount received",
+  "creditReferenceNote": "Reference / note (optional)",
+  "creditPaymentRecorded": "Payment recorded.",
+  "creditReversePaymentTitle": "Reverse this payment?",
+  "creditReversePaymentBody": "Removes the {amount} K receipt and puts the balance back. This is recorded against your account.",
+  "@creditReversePaymentBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditReverse": "Reverse",
+  "creditPaymentReversed": "Payment reversed.",
+  "creditRecordPayment": "Record payment",
+  "creditOutstanding": "Outstanding",
+  "creditStatement": "Statement",
+  "creditNoLedgerActivity": "No ledger activity for this account yet.",
+  "creditDebtAdded": "Credit added",
+  "creditPaymentReceived": "Payment received",
+  "creditReversePaymentTooltip": "Reverse payment",
+  "creditPaymentMustBePositive": "Payment must be greater than zero.",
+  "creditPaymentExceedsBalance": "Payment exceeds the outstanding balance of {amount} kyat.",
+  "@creditPaymentExceedsBalance": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditCustomerDoesNotExist": "Customer {id} does not exist.",
+  "@creditCustomerDoesNotExist": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "creditSupplierDoesNotExist": "Supplier {id} does not exist.",
+  "@creditSupplierDoesNotExist": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "creditLedgerEntryMissing": "That ledger entry no longer exists.",
+  "creditOnlyPaymentReversible": "Only a recorded payment can be reversed; a debt is undone by reversing its source sale or purchase.",
+  "creditDebtEntryPositive": "A debt entry must be positive.",
+  "creditPaymentEntryPositive": "A payment entry must be positive.",
+  "coreFieldRequired": "Required",
+  "coreMoneyFormatError": "Enter a number, up to two decimals",
+  "expNewExpense": "New expense",
+  "expAmount": "Amount",
+  "expNoteOptional": "Note (optional)",
+  "expCategory": "Category",
+  "expDeleteTitle": "Delete this expense?",
+  "expCannotUndo": "This cannot be undone.",
+  "expDeleted": "Expense deleted.",
+  "expNoExpensesRecorded": "No expenses recorded yet.",
+  "expNoExpensesYet": "No expenses yet.",
+  "expNeedsCategory": "An expense needs a category.",
+  "expAmountMustBePositive": "Amount must be greater than zero.",
+  "invEditMedicineTitle": "Edit medicine",
+  "invAddMedicineTitle": "Add medicine",
+  "invTradeName": "Trade name",
+  "invGenericNameOptional": "Generic name (optional)",
+  "invTradeNameRequired": "The name on the shelf is required",
+  "invCategory": "Category",
+  "invShelfLocation": "Shelf location",
+  "invBarcode": "Barcode",
+  "invBarcodeHelper": "Scan or type the EAN. Blank for loose repackaged stock, which is most local medicines.",
+  "invLowStockAlertAt": "Low-stock alert at (optional)",
+  "invLowStockAlertHelper": "Counted in the smallest unit. Blank means no alert for this item.",
+  "invUnitsSection": "Units",
+  "invAddUnit": "Add unit",
+  "invUnitsSectionHint": "Largest package first. Exactly one unit must convert to 1 — that is the unit stock is counted in.",
+  "invUnitName": "Unit name",
+  "invUnitNameHint": "Box / Strip / Tablet / Bottle",
+  "invEquals": "Equals",
+  "invHolds": "Holds",
+  "invRemoveThisUnit": "Remove this unit",
+  "invSmallestUnitNote": "Smallest unit — batches are counted in it.",
+  "invSaveChanges": "Save changes",
+  "invSaveMedicine": "Save medicine",
+  "invAddAtLeastOneUnit": "Add at least one unit.",
+  "invEveryUnitNeedsName": "Every unit needs a name.",
+  "invUnitMustHoldWholePieces": "\"{unit}\" must hold whole pieces.",
+  "@invUnitMustHoldWholePieces": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "invRetailPriceForUnit": "Set the retail price for \"{unit}\".",
+  "@invRetailPriceForUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "invShowOnlyLowStock": "Show only low stock",
+  "invSearchHint": "Search name, generic or barcode",
+  "invLowBadge": "LOW",
+  "invNoStockBadge": "NO STOCK",
+  "invExpiringBadge": "{count, plural, =1{1 expiring} other{{count} expiring}}",
+  "@invExpiringBadge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "invShelfAt": "Shelf {shelf}",
+  "@invShelfAt": {
+    "placeholders": {
+      "shelf": {
+        "type": "String"
+      }
+    }
+  },
+  "invStockValueK": "stock value {money} K",
+  "@invStockValueK": {
+    "placeholders": {
+      "money": {
+        "type": "String"
+      }
+    }
+  },
+  "invNothingMatchesFilter": "Nothing matches this filter.",
+  "invClearSearchHint": "Clear the search box to see the full list.",
+  "invNoMedicinesYet": "No medicines yet.",
+  "invFirstMedicineHint": "Add the first one, then record a delivery to put stock on the shelf.",
+  "invAskOwnerToAdd": "Ask the owner to add medicines and record a delivery.",
+  "invInventoryReadFailed": "The inventory could not be read.",
+  "invPiecesFallback": "pieces",
+  "invNoStockRecordDelivery": "No stock. Record a delivery to add batches.",
+  "invBatchNumber": "Batch {number}",
+  "@invBatchNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "invBatchCost": "cost {price} K",
+  "@invBatchCost": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "invExpired": "expired",
+  "invDaysLeft": "{count, plural, =1{1 day left} other{{count} days left}}",
+  "@invDaysLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "invBatchTotals": "{batchCount, plural, =1{1 batch} other{{batchCount} batches}} · {quantity} in stock",
+  "@invBatchTotals": {
+    "placeholders": {
+      "batchCount": {
+        "type": "int"
+      },
+      "quantity": {
+        "type": "int"
+      }
+    }
+  },
+  "invBatchValuationNote": "Costed at {value} kyat. FEFO sells the earliest expiry first.",
+  "@invBatchValuationNote": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "invNoUnitsConfigured": "This medicine has no units configured. Add at least the smallest unit.",
+  "invNoSmallestUnit": "No smallest unit configured: every unit converts to more than one piece. Add the single-piece unit with factor 1.",
+  "invMoreThanOneSmallestUnit": "More than one smallest unit is configured ({names}); exactly one is required.",
+  "@invMoreThanOneSmallestUnit": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "invDuplicateUnitNames": "Unit names must differ per medicine; two units share a name.",
+  "invUnknownUnit": "Unknown unit \"{name}\" for this medicine.",
+  "@invUnknownUnit": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "invQuantityAtLeast1": "Quantity must be at least 1, got {value}.",
+  "@invQuantityAtLeast1": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "invQuantityNotNegative": "Quantity cannot be negative, got {value}.",
+  "@invQuantityNotNegative": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "invMedicineNameRequired": "A medicine name is required.",
+  "invBarcodeTaken": "Barcode {barcode} is already on {medicine}.",
+  "@invBarcodeTaken": {
+    "placeholders": {
+      "barcode": {
+        "type": "String"
+      },
+      "medicine": {
+        "type": "String"
+      }
+    }
+  },
+  "invMedicineStillHasStock": "This medicine still has stock. Write it off or transfer it first.",
+  "invBatchRemovalTooLarge": "Only {remaining} left in batch {batch}; cannot remove {removal}.",
+  "@invBatchRemovalTooLarge": {
+    "placeholders": {
+      "batch": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "int"
+      },
+      "removal": {
+        "type": "int"
+      }
+    }
+  },
+  "licenseTitle": "Activate your licence",
+  "licenseIntro": "Enter the activation key supplied with your pharmacy licence. This is a one-time step.",
+  "licenseKeyLabel": "Activation key",
+  "licenseActivate": "Activate",
+  "licenseKeyRequired": "Enter your activation key.",
+  "licenseActivationFailed": "Activation failed.",
+  "licenseStoredKeyInvalid": "Stored key could not be verified.",
+  "licenseKeyNotJwt": "Key must be a JWT: three dot-separated segments.",
+  "licenseSignatureMismatch": "Signature mismatch — key mistyped, altered, or issued with a different secret.",
+  "licenseNoFeaturesClaim": "Key carries no features claim.",
+  "licenseUnreadableExpiry": "Unreadable expiry claim in key.",
+  "licenseUnsupportedAlgorithm": "Unsupported key algorithm: {algorithm}.",
+  "@licenseUnsupportedAlgorithm": {
+    "placeholders": {
+      "algorithm": {
+        "type": "String"
+      }
+    }
+  },
+  "licenseUnknownVendor": "Key issued by unknown vendor \"{vendor}\".",
+  "@licenseUnknownVendor": {
+    "placeholders": {
+      "vendor": {
+        "type": "String"
+      }
+    }
+  },
+  "licenseKeyExpired": "Key expired on {date}.",
+  "@licenseKeyExpired": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "licenseSegmentNotBase64": "{label} segment is not valid base64url.",
+  "@licenseSegmentNotBase64": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "licenseSegmentNotJsonObject": "The {label} must decode to a JSON object.",
+  "@licenseSegmentNotJsonObject": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "licenseSegmentNotJson": "The {label} is not valid JSON.",
+  "@licenseSegmentNotJson": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "licenseSegmentNotUtf8": "The {label} is not valid UTF-8.",
+  "@licenseSegmentNotUtf8": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "purchChooseSupplier": "Choose a supplier",
+  "purchOwes": "owes {amount}",
+  "@purchOwes": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "purchSupplier": "Supplier",
+  "purchChooseExisting": "Choose existing",
+  "purchSelectedSupplier": "Selected (#{id})",
+  "@purchSelectedSupplier": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "purchOrNewSupplierName": "or new supplier name",
+  "purchEnterDifferentSupplier": "Enter a different supplier",
+  "purchInvoiceGrnNumber": "Invoice / GRN number (optional)",
+  "purchLines": "Lines",
+  "purchAddLine": "Add line",
+  "purchSaveAndAddToStock": "Save and add to stock",
+  "purchWhichMedicineArrived": "Which medicine arrived?",
+  "purchAddMedicineFirst": "Add a medicine first.",
+  "purchChooseMedicine": "Choose medicine",
+  "purchRemoveLine": "Remove line",
+  "purchBatchExpiryDate": "Batch expiry date",
+  "purchBatchNumber": "Batch number",
+  "purchExpiry": "Expiry",
+  "purchUnit": "Unit",
+  "purchQty": "Qty",
+  "purchCostPerUnit": "Cost per {unit}",
+  "@purchCostPerUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "purchPiece": "piece",
+  "purchAddsUnitsToStock": "Adds {count} {unit}s to stock.",
+  "@purchAddsUnitsToStock": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "purchAddsPiecesToStock": "Adds {count} pieces to stock.",
+  "@purchAddsPiecesToStock": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "purchInvoiceTotal": "Invoice total",
+  "purchPaidNow": "Paid now",
+  "purchPaidNowHelper": "Leave blank or short to put the balance on the supplier account.",
+  "purchAddedToPayable": "Added to payable",
+  "purchBalance": "Balance",
+  "purchStockedIn": "Stocked in {amount} kyat",
+  "@purchStockedIn": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "purchLinesCount": "{count, plural, =1{1 line} other{{count} lines}}",
+  "@purchLinesCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "purchNewBatchesCount": "{count, plural, =1{1 new batch} other{{count} new batches}}",
+  "@purchNewBatchesCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "purchMergedIntoExisting": "{count} merged into an existing batch",
+  "@purchMergedIntoExisting": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "purchBalanceAdded": "Balance of {amount} kyat added to the supplier account.",
+  "@purchBalanceAdded": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "purchPaidInFull": "Paid in full — nothing added to the supplier account.",
+  "purchPickSupplierOrName": "Choose a supplier or type a new name.",
+  "purchLinePickMedicine": "Line {number}: pick a medicine.",
+  "@purchLinePickMedicine": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "purchLineBatchNumber": "Line {number}: the batch number is printed on the carton.",
+  "@purchLineBatchNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "purchLineExpiryDate": "Line {number}: set the expiry date.",
+  "@purchLineExpiryDate": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "purchLineQuantity": "Line {number}: quantity must be at least 1.",
+  "@purchLineQuantity": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "purchLineCost": "Line {number}: set the cost price.",
+  "@purchLineCost": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "purchPaidExceedsTotal": "Paid {paid} is more than the {total} invoice.",
+  "@purchPaidExceedsTotal": {
+    "placeholders": {
+      "paid": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "purchSupplierNameRequired": "Supplier name is required.",
+  "purchPaymentMustBePositive": "Payment must be greater than zero.",
+  "purchPaymentExceedsBalance": "Payment exceeds the outstanding balance of {amount} kyat.",
+  "@purchPaymentExceedsBalance": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "purchAddAtLeastOneLine": "Add at least one medicine line.",
+  "purchDuplicateSaleUnit": "The same batch ({batch}) appears twice for one medicine. Combine the quantities into a single line.",
+  "@purchDuplicateSaleUnit": {
+    "placeholders": {
+      "batch": {
+        "type": "String"
+      }
+    }
+  },
+  "purchPaidNotNegative": "Paid amount cannot be negative.",
+  "purchPaidExceedsInvoice": "Paid {paid} exceeds the invoice total of {total}.",
+  "@purchPaidExceedsInvoice": {
+    "placeholders": {
+      "paid": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "purchEveryLineNeedsBatch": "Every line needs a batch number.",
+  "purchQuantityAtLeast1": "Quantity must be at least 1.",
+  "purchCostNotNegative": "Cost price cannot be negative.",
+  "purchFactorAtLeast1": "Unit conversion factor must be 1 or more.",
+  "purchBatchAlreadyExpired": "Batch {batch} is already expired. Refuse the delivery or record it as a write-off.",
+  "@purchBatchAlreadyExpired": {
+    "placeholders": {
+      "batch": {
+        "type": "String"
+      }
+    }
+  },
+  "purchSupplierDoesNotExist": "Supplier {id} does not exist.",
+  "@purchSupplierDoesNotExist": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "reportTitleToday": "Reports — today",
+  "reportSalesToday": "Today's sales",
+  "reportVoucherCount": "{count, plural, =1{1 voucher} other{{count} vouchers}}",
+  "@reportVoucherCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reportNetProfit": "Net profit",
+  "reportNetProfitFormula": "sales − cost − expenses",
+  "reportReceivable": "Receivable",
+  "reportReceivableCaption": "owed to the shop",
+  "reportPayable": "Payable",
+  "reportPayableCaption": "the shop owes",
+  "reportLowStock": "Low stock",
+  "reportLowStockEmpty": "Nothing is below its reorder level.",
+  "reportExpiringWithinDays": "{days, plural, =1{Expiring within 1 day} other{Expiring within {days} days}}",
+  "@reportExpiringWithinDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "reportExpiringEmpty": "No batch expires in the window.",
+  "reportExpiredDaysAgo": "{days, plural, =1{expired 1d ago} other{expired {days}d ago}}",
+  "@reportExpiredDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "reportDaysLeft": "{days, plural, =1{1 day left} other{{days} days left}}",
+  "@reportDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "reportBatchNumber": "Batch #{id}",
+  "@reportBatchNumber": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "reportProfitBuildTitle": "How net profit is built",
+  "reportTotalSales": "Total sales",
+  "reportMinusCostOfGoods": "− Cost of goods",
+  "reportMinusExpenses": "− Expenses",
+  "reportAndMoreCount": "…and {count, plural, =1{1 more} other{{count} more}}",
+  "@reportAndMoreCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dashDevLicenceTitle": "Development licence secret in use",
+  "dashDevLicenceBody": "This build verifies keys against the placeholder secret that is committed to the repository. Build with --dart-define=PHARMACY_LICENSE_SECRET=… before issuing a customer key.",
+  "dashLicence": "Licence",
+  "dashLicenceNamed": "Licence: {client}",
+  "@dashLicenceNamed": {
+    "placeholders": {
+      "client": {
+        "type": "String"
+      }
+    }
+  },
+  "dashStatusLine": "Status: {status}",
+  "@dashStatusLine": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "dashExpiresLine": "Expires: {date}",
+  "@dashExpiresLine": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "dashModulesLine": "Modules: {modules}",
+  "@dashModulesLine": {
+    "placeholders": {
+      "modules": {
+        "type": "String"
+      }
+    }
+  },
+  "dashLicenceNever": "never (perpetual licence)",
+  "dashStatusUnknown": "unknown",
+  "dashStatusNotActivated": "not activated",
+  "dashStatusActive": "active",
+  "dashStatusInvalidKey": "invalid key",
+  "dashStatusExpired": "expired",
+  "dashYourAccess": "Your access",
+  "dashAccessCostVisible": "Cost prices and profit reports are visible to your role.",
+  "dashAccessCostHidden": "Cost prices and profit reports are hidden for the {role} role.",
+  "@dashAccessCostHidden": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "dashPhase5Note": "Phase 5 — credit ledgers, expenses, daily profit reports and encrypted database backup.",
+  "dashLicenceExpiresInDays": "{days, plural, =1{Licence expires in 1 day} other{Licence expires in {days} days}}",
+  "@dashLicenceExpiresInDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "dashLicenceExpiredDaysAgo": "{days, plural, =1{Licence expired 1 day ago} other{Licence expired {days} days ago}}",
+  "@dashLicenceExpiredDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "dashLicenceRenewBody": "Renew before then to keep using the app. Your data stays on this device; entering a new activation key restores access immediately.",
+  "notifChannelName": "Expiring Stock Alerts",
+  "notifChannelDescription": "Notifications for batches expiring soon",
+  "notifBatchExpiringSoon": "Batch expiring soon",
+  "notifExpiryBody": "{name} expires in {days, plural, =1{1 day} other{{days} days}}",
+  "@notifExpiryBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "notifUnknown": "Unknown",
+  "saleNoMatchesClearSearch": "Nothing matches. Clear the search to see the catalogue.",
+  "@saleNoMatchesClearSearch": {
+    "description": "Empty state under the POS search field."
+  },
+  "saleNoUnitsSetBadge": "no units set",
+  "@saleNoUnitsSetBadge": {
+    "description": "Badge on a product card with no sellable units configured."
+  },
+  "saleOneSellableUnit": "This product has one sellable unit.",
+  "@saleOneSellableUnit": {
+    "description": "Toast shown when tapping the unit switch on a single-unit product."
+  },
+  "saleSellAs": "Sell {name} as",
+  "@saleSellAs": {
+    "description": "Title of the unit picker dialog.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "saleDiscountOverSubtotal": "More than the subtotal",
+  "@saleDiscountOverSubtotal": {
+    "description": "Validation error under the cart discount field."
+  },
+  "saleEnterNumber": "Enter a number",
+  "@saleEnterNumber": {
+    "description": "Validation error under the cart discount field."
+  },
+  "saleCartEmpty": "Your cart is empty.",
+  "@saleCartEmpty": {
+    "description": "Checkout summary when no line is on the ticket."
+  },
+  "saleCartLines": "{count, plural, =1{{count} line} other{{count} lines}}",
+  "@saleCartLines": {
+    "description": "Checkout summary counting the cart's line items.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "saleReceivedLabel": "Received",
+  "@saleReceivedLabel": {
+    "description": "Label of the amount-tendered field."
+  },
+  "saleChargeOnCredit": "Charge {amount} K on credit",
+  "@saleChargeOnCredit": {
+    "description": "Submit button when part of the total goes to a customer's account.",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "saleCompleteSale": "Complete sale",
+  "@saleCompleteSale": {
+    "description": "Submit button for a fully settled sale."
+  },
+  "saleNoCustomersYet": "No customers yet. Create one in {screen}.",
+  "@saleNoCustomersYet": {
+    "description": "Error when a credit sale is attempted with an empty customer list.",
+    "placeholders": {
+      "screen": {
+        "type": "String"
+      }
+    }
+  },
+  "saleChargeThisSaleTo": "Charge this sale to",
+  "@saleChargeThisSaleTo": {
+    "description": "Heading of the customer picker sheet."
+  },
+  "saleDebtAndLimit": "Debt {debt} · limit {limit} K",
+  "@saleDebtAndLimit": {
+    "description": "Customer row in the picker sheet.",
+    "placeholders": {
+      "debt": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "saleCash": "Cash",
+  "@saleCash": {
+    "description": "Payment method."
+  },
+  "saleBalanceOnCredit": "Balance on credit",
+  "@saleBalanceOnCredit": {
+    "description": "Totals row naming the unpaid balance."
+  },
+  "saleChange": "Change",
+  "@saleChange": {
+    "description": "Totals row and voucher label for money handed back."
+  },
+  "salePickACustomer": "Pick a customer",
+  "@salePickACustomer": {
+    "description": "Credit picker when no customer is chosen yet."
+  },
+  "salePaidInFull": "Paid in full",
+  "@salePaidInFull": {
+    "description": "Credit picker state when the tendered amount covers the total."
+  },
+  "saleCarriesBalance": "{name} carries the balance",
+  "@saleCarriesBalance": {
+    "description": "Subtitle naming the customer the balance is charged to.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "saleClear": "Clear",
+  "@saleClear": {
+    "description": "Tooltip of the button that drops the chosen customer."
+  },
+  "saleChoose": "Choose",
+  "@saleChoose": {
+    "description": "Button that opens the customer picker."
+  },
+  "saleConfirmedTitle": "Sale complete",
+  "@saleConfirmedTitle": {
+    "description": "Title of the post-sale confirmation dialog."
+  },
+  "saleVoucherNumber": "Voucher: {number}",
+  "@saleVoucherNumber": {
+    "description": "Voucher number line in the sale-complete dialog.",
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "saleTotalAmount": "Total {amount} K",
+  "@saleTotalAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "saleChangeAmount": "Change {amount} K",
+  "@saleChangeAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "saleOnCreditAmount": "On credit {amount} K",
+  "@saleOnCreditAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "saleNewSale": "New sale",
+  "@saleNewSale": {
+    "description": "Dialog button that closes the confirmation and clears the till."
+  },
+  "saleVoucher": "Voucher",
+  "@saleVoucher": {
+    "description": "Print action and the voucher's own header label."
+  },
+  "saleVoucherReady": "Voucher {file} ready ({bytes} bytes). Printing hardware wiring lands with the on-device pass.",
+  "@saleVoucherReady": {
+    "description": "Note shown after the voucher renders.",
+    "placeholders": {
+      "file": {
+        "type": "String"
+      },
+      "bytes": {
+        "type": "String"
+      }
+    }
+  },
+  "saleVoucherBuildFailed": "Could not build the voucher: {error}",
+  "@saleVoucherBuildFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "saleCouldNotComplete": "Could not complete the sale: {error}",
+  "@saleCouldNotComplete": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "saleSessionExpired": "Session expired — sign in again to sell.",
+  "@saleSessionExpired": {
+    "description": "Checkout error when no cashier is signed in."
+  },
+  "saleChooseCustomerForBalance": "Choose a customer to carry the balance.",
+  "saleKpayFullPayment": "A KPay sale must be paid in full.",
+  "saleStaff": "staff",
+  "@saleStaff": {
+    "description": "Cashier name shown on the voucher when the signed-in user is unknown."
+  },
+  "saleItemFallback": "Item {id}",
+  "@saleItemFallback": {
+    "description": "Voucher line name when the product name is not cached.",
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "saleCustomerNameRequired": "Customer name is required.",
+  "saleCreditLimitNotNegative": "Credit limit cannot be negative.",
+  "salePaymentMustBePositive": "Payment must be greater than zero.",
+  "salePaymentExceedsBalance": "Payment exceeds the outstanding balance of {balance} kyat.",
+  "@salePaymentExceedsBalance": {
+    "placeholders": {
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
+  "saleCartIsEmpty": "The cart is empty.",
+  "saleDiscountNotNegative": "Discount cannot be negative.",
+  "saleReceivedNotNegative": "Received amount cannot be negative.",
+  "saleDiscountExceedsSubtotal": "Discount of {discount} exceeds the subtotal of {subtotal}.",
+  "@saleDiscountExceedsSubtotal": {
+    "placeholders": {
+      "discount": {
+        "type": "String"
+      },
+      "subtotal": {
+        "type": "String"
+      }
+    }
+  },
+  "saleBalanceNeedsCustomer": "A sale with an unpaid balance must be charged to a customer.",
+  "salePartialPaymentNotKPay": "Partial payment cannot be a KPay sale. Record the balance as a credit or take full payment.",
+  "saleQuantityAtLeast1": "Quantity must be at least 1.",
+  "saleUnitPriceNotNegative": "Unit price cannot be negative.",
+  "saleFactorAtLeast1": "Unit conversion factor must be 1 or more.",
+  "saleLineMustNameUnit": "A sale line must name its unit.",
+  "saleCustomerDoesNotExist": "Customer {id} does not exist.",
+  "@saleCustomerDoesNotExist": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "saleCustomerNotActive": "{name} is not an active customer.",
+  "@saleCustomerNotActive": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "saleOverCreditLimit": "{name} is over their credit limit: this sale would take their balance to {projected}, above the {limit} limit.",
+  "@saleOverCreditLimit": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "projected": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "saleShortage": "Not enough stock: {requested} needed but only {available} available.",
+  "@saleShortage": {
+    "placeholders": {
+      "requested": {
+        "type": "String"
+      },
+      "available": {
+        "type": "String"
+      }
+    }
+  },
+  "saleProductShortage": "{product} — only {available} of {requested} in stock",
+  "@saleProductShortage": {
+    "description": "Shortage naming the product, as the till reports it.",
+    "placeholders": {
+      "product": {
+        "type": "String"
+      },
+      "available": {
+        "type": "String"
+      },
+      "requested": {
+        "type": "String"
+      }
+    }
+  },
+  "saleLineMinOneUnit": "A sale line must take at least one smallest unit.",
+  "saleVoucherDateLabel": "Date",
+  "saleVoucherCustomerLabel": "Customer",
+  "saleVoucherCashierLabel": "Cashier",
+  "saleVoucherTypeLabel": "Type",
+  "saleVoucherBalanceDue": "Balance due",
+  "saleVoucherItemHeader": "Item",
+  "saleVoucherQtyHeader": "Qty",
+  "saleVoucherPriceHeader": "Price",
+  "saleVoucherThankYou": "Thank you. Keep this voucher for returns.",
+  "@saleVoucherThankYou": {
+    "description": "Voucher footer."
+  },
+  "saleVoucherShopName": "Pharmacy",
+  "@saleVoucherShopName": {
+    "description": "Voucher header when the licence shop name is unavailable."
   }
 }

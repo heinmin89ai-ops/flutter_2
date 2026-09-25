@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../../core/money.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../routing/routes.dart';
 import '../application/inventory_providers.dart';
 import '../data/inventory_repository.dart';
@@ -43,13 +45,14 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
   Widget build(BuildContext context) {
     final canManage = ref.watch(canManageInventoryProvider);
     final state = ref.watch(inventoryListProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inventory'),
+        title: Text(l10n.inventory),
         actions: [
           IconButton(
-            tooltip: 'Show only low stock',
+            tooltip: l10n.invShowOnlyLowStock,
             onPressed: () => ref
                 .read(inventoryFilterProvider.notifier)
                 .setLowStockOnly(
@@ -63,7 +66,7 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
           ? FloatingActionButton.extended(
               onPressed: () => context.push(AppRoutes.addMedicine),
               icon: const Icon(Icons.add),
-              label: const Text('Medicine'),
+              label: Text(l10n.addMedicine),
             )
           : null,
       body: Column(
@@ -74,7 +77,7 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
               controller: _search,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: 'Search name, generic or barcode',
+                hintText: l10n.invSearchHint,
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _search.text.isEmpty
                     ? null
@@ -99,7 +102,7 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
               data: (rows) => _List(rows: rows, canManage: canManage),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) =>
-                  _Failure(message: '$error', onRetry: _refresh),
+                  _Failure(message: l10n.describe(error), onRetry: _refresh),
             ),
           ),
         ],
@@ -152,24 +155,33 @@ class _InventoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final medicine = row.medicine;
     final alerts = <Widget>[
-      if (row.isLow) const _Badge(text: 'LOW', tone: BadgeTone.warning),
+      if (row.isLow) _Badge(text: l10n.invLowBadge, tone: BadgeTone.warning),
       if (row.expiringBatchCount > 0)
         _Badge(
-          text: '${row.expiringBatchCount} expiring',
+          text: l10n.invExpiringBadge(row.expiringBatchCount),
           tone: BadgeTone.danger,
         ),
       if (row.neverStocked)
-        const _Badge(text: 'NO STOCK', tone: BadgeTone.neutral),
+        _Badge(text: l10n.invNoStockBadge, tone: BadgeTone.neutral),
     ];
+
+    // The repository's own labels are English fallbacks for medicines without a
+    // usable hierarchy; render the piece count in the active locale here.
+    final pieces = l10n.invPiecesFallback;
+    final stockText = row.hierarchy == null
+        ? '${row.stockInBase} $pieces'
+        : row.stockLabel;
+    final unitText = row.hierarchy?.base.name ?? pieces;
 
     return ListTile(
       onTap: () => showMedicineBatches(context, medicine),
       title: Text(medicine.tradeName),
       subtitle: _Subtitle(
         genericName: medicine.genericName,
-        detail: _detailLine(row, maySeeCost),
+        detail: _detailLine(row, maySeeCost, l10n),
         alerts: alerts,
       ),
       trailing: Column(
@@ -177,7 +189,7 @@ class _InventoryTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            row.stockLabel,
+            stockText,
             textAlign: TextAlign.end,
             style: theme.textTheme.titleSmall?.copyWith(
               color: row.outOfStock
@@ -186,7 +198,7 @@ class _InventoryTile extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          Text(row.baseUnitName, style: theme.textTheme.bodySmall),
+          Text(unitText, style: theme.textTheme.bodySmall),
         ],
       ),
     );
@@ -197,13 +209,17 @@ class _InventoryTile extends StatelessWidget {
   /// The value is the batch-weighted stock valuation, not an averaged guess, and
   /// it only renders for roles holding `viewCostPrice` — a cashier at this screen
   /// has no business seeing what the shop paid.
-  static String _detailLine(InventoryRow row, bool maySeeCost) {
+  static String _detailLine(
+    InventoryRow row,
+    bool maySeeCost,
+    AppLocalizations l10n,
+  ) {
+    final shelf = row.medicine.shelfLocation;
     final parts = <String>[
-      if ((row.medicine.shelfLocation ?? '').isNotEmpty)
-        'Shelf ${row.medicine.shelfLocation}',
+      if ((shelf ?? '').isNotEmpty) l10n.invShelfAt(shelf!),
       if ((row.medicine.category ?? '').isNotEmpty) row.medicine.category!,
       if (maySeeCost && !row.outOfStock)
-        'stock value ${formatMoney(row.stockValuePya)} K',
+        l10n.invStockValueK(formatMoney(row.stockValuePya)),
     ];
     return parts.isEmpty ? '—' : parts.join(' · ');
   }
@@ -294,6 +310,7 @@ class _Empty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     return ListView(
       children: [
         const SizedBox(height: 80),
@@ -306,18 +323,17 @@ class _Empty extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          hasFilter ? 'Nothing matches this filter.' : 'No medicines yet.',
+          hasFilter ? l10n.invNothingMatchesFilter : l10n.invNoMedicinesYet,
           textAlign: TextAlign.center,
           style: theme.textTheme.titleSmall,
         ),
         const SizedBox(height: 4),
         Text(
           hasFilter
-              ? 'Clear the search box to see the full list.'
+              ? l10n.invClearSearchHint
               : canManage
-              ? 'Add the first one, then record a delivery to put stock on the '
-                    'shelf.'
-              : 'Ask the owner to add medicines and record a delivery.',
+              ? l10n.invFirstMedicineHint
+              : l10n.invAskOwnerToAdd,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall,
         ),
@@ -335,6 +351,7 @@ class _Failure extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -344,7 +361,7 @@ class _Failure extends StatelessWidget {
             Icon(Icons.error_outline, size: 40, color: theme.colorScheme.error),
             const SizedBox(height: 12),
             Text(
-              'The inventory could not be read.',
+              l10n.invInventoryReadFailed,
               style: theme.textTheme.titleSmall,
             ),
             const SizedBox(height: 8),
@@ -352,7 +369,7 @@ class _Failure extends StatelessWidget {
             const SizedBox(height: 16),
             FilledButton.tonal(
               onPressed: () => onRetry(),
-              child: const Text('Try again'),
+              child: Text(l10n.tryAgain),
             ),
           ],
         ),

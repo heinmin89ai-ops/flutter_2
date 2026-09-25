@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../../core/money.dart';
 
 /// A single expense category's total over a window, for the report's breakdown.
@@ -41,10 +42,10 @@ class ExpenseRepository {
   }) async {
     final trimmed = category.trim();
     if (trimmed.isEmpty) {
-      throw const ExpenseRejectException('An expense needs a category.');
+      throw const ExpenseRejectException('expNeedsCategory');
     }
     if (amountPya <= 0) {
-      throw const ExpenseRejectException('Amount must be greater than zero.');
+      throw const ExpenseRejectException('expAmountMustBePositive');
     }
     final now = at ?? DateTime.now();
     final id = await _db
@@ -175,11 +176,25 @@ class ExpenseRepository {
   }
 }
 
-class ExpenseRejectException implements Exception {
-  const ExpenseRejectException(this.message);
-
-  final String message;
+/// A rejected expense form. Carries a localisation key, not English prose:
+/// [debugMessage] keeps the original English for logs, while the presentation
+/// layer renders [errorKey] through `expenseErrors` in the active locale.
+class ExpenseRejectException implements LocalizedError {
+  const ExpenseRejectException(this.errorKey, [this.errorArgs = const {}]);
 
   @override
-  String toString() => 'ExpenseRejectException: $message';
+  final String errorKey;
+
+  @override
+  final Map<String, String> errorArgs;
+
+  @override
+  String get debugMessage => switch (errorKey) {
+    'expNeedsCategory' => 'An expense needs a category.',
+    'expAmountMustBePositive' => 'Amount must be greater than zero.',
+    _ => errorKey,
+  };
+
+  @override
+  String toString() => 'ExpenseRejectException: $debugMessage';
 }

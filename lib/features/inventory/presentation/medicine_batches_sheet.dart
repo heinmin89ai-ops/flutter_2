@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../../core/money.dart';
 import '../../../routing/routes.dart';
 import '../application/inventory_providers.dart';
@@ -31,6 +32,7 @@ class _BatchesSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final batches = ref.watch(medicineBatchesProvider(medicine.id));
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final canEdit = ref.watch(canManageInventoryProvider);
 
     return DraggableScrollableSheet(
@@ -53,7 +55,7 @@ class _BatchesSheet extends ConsumerWidget {
                   TextButton(
                     onPressed: () =>
                         context.push(AppRoutes.addMedicine, extra: medicine),
-                    child: const Text('Edit'),
+                    child: Text(l10n.edit),
                   ),
               ],
             ),
@@ -69,7 +71,7 @@ class _BatchesSheet extends ConsumerWidget {
                         const SizedBox(height: 12),
                         Center(
                           child: Text(
-                            'No stock. Record a delivery to add batches.',
+                            l10n.invNoStockRecordDelivery,
                             style: theme.textTheme.bodySmall,
                           ),
                         ),
@@ -87,7 +89,7 @@ class _BatchesSheet extends ConsumerWidget {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('$error'),
+                child: Text(l10n.describe(error)),
               ),
             ),
           ),
@@ -105,6 +107,7 @@ class _BatchTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final batch = item.batch;
     final days = item.daysToExpiry;
     final expiryColour = item.isExpired
@@ -115,11 +118,11 @@ class _BatchTile extends StatelessWidget {
 
     return ListTile(
       dense: true,
-      title: Text('Batch ${batch.batchNumber}'),
+      title: Text(l10n.invBatchNumber(batch.batchNumber)),
       subtitle: Text(
         '${_ymd(batch.expiryDate)} · ${batch.qtyInSmallestUnit} '
-        '${item.hierarchy.base.name.toLowerCase()} · cost '
-        '${formatMoney(batch.costPrice)} K',
+        '${item.hierarchy.base.name.toLowerCase()} · '
+        '${l10n.invBatchCost(formatMoney(batch.costPrice))}',
       ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -127,7 +130,7 @@ class _BatchTile extends StatelessWidget {
         children: [
           Text(item.humanQuantity, style: theme.textTheme.titleSmall),
           Text(
-            item.isExpired ? 'expired' : '$days days left',
+            item.isExpired ? l10n.invExpired : l10n.invDaysLeft(days),
             style: theme.textTheme.bodySmall?.copyWith(color: expiryColour),
           ),
         ],
@@ -154,6 +157,7 @@ class _Totals extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final total = rows.fold<int>(0, (sum, b) => sum + b.qtyInBase);
     final value = rows.fold<Pya>(0, (sum, b) => sum + b.remainingValuePya);
     return Padding(
@@ -162,13 +166,11 @@ class _Totals extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${rows.length} batch${rows.length == 1 ? '' : 'es'} · '
-            '$total in stock',
+            l10n.invBatchTotals(rows.length, total),
             style: theme.textTheme.titleSmall,
           ),
           Text(
-            'Costed at ${formatMoney(value)} kyat. FEFO sells the '
-            'earliest expiry first.',
+            l10n.invBatchValuationNote(formatMoney(value)),
             style: theme.textTheme.bodySmall,
           ),
         ],

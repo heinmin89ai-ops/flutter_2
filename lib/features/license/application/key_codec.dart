@@ -7,6 +7,8 @@
 /// `license_providers.dart` knows which format is live.
 library;
 
+import '../../../core/l10n/l10n_bridge.dart';
+
 /// What a licence key grants, independent of how it was encoded.
 class LicenceFacts {
   const LicenceFacts({
@@ -40,11 +42,28 @@ abstract interface class FeatureDecoder {
   LicenceFacts decode(String activationKey);
 }
 
-class ActivationKeyException implements Exception {
-  const ActivationKeyException(this.message);
-
-  final String message;
+/// Thrown when a licence key is malformed, forged or expired.
+///
+/// Carries a localisation [errorKey] (plus optional [errorArgs]) instead of
+/// user-facing English so the presentation layer renders it through
+/// `l10n.message(...)` / `l10n.describe(...)`. [debugMessage] keeps the original
+/// English for logs.
+class ActivationKeyException implements LocalizedError {
+  const ActivationKeyException(
+    this.errorKey, {
+    this.errorArgs = const {},
+    required this.debugMessage,
+  });
 
   @override
-  String toString() => 'ActivationKeyException: $message';
+  final String errorKey;
+
+  @override
+  final Map<String, String> errorArgs;
+
+  @override
+  final String debugMessage;
+
+  @override
+  String toString() => 'ActivationKeyException: $debugMessage';
 }

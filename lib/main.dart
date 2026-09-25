@@ -20,6 +20,7 @@ import 'features/inventory/presentation/inventory_list_screen.dart';
 import 'features/license/application/license_providers.dart';
 import 'features/license/presentation/activation_key_screen.dart';
 import 'features/notifications/application/expiry_alert_service.dart';
+import 'features/notifications/application/notification_gateway.dart';
 import 'features/purchases/presentation/add_purchase_screen.dart';
 import 'features/reports/presentation/report_dashboard_screen.dart';
 import 'features/sales/presentation/pos_screen.dart';
@@ -219,8 +220,22 @@ class _BootGateState extends ConsumerState<BootGate> {
     await ref.read(authProvider.notifier).restoreSession();
     if (!mounted) return;
 
-    // Fire expiry notifications after auth is restored, non-blocking.
-    unawaited(runExpiryAlertStartup(ref));
+    // Fire expiry notifications after auth is restored, non-blocking. The
+    // strings are resolved here because the notification layer has no
+    // BuildContext of its own.
+    final l10n = AppLocalizations.of(context);
+    unawaited(
+      runExpiryAlertStartup(
+        ref,
+        labels: NotificationLabels(
+          channelName: l10n.notifChannelName,
+          channelDescription: l10n.notifChannelDescription,
+          alertTitle: l10n.notifBatchExpiringSoon,
+          expiryBody: l10n.notifExpiryBody,
+          unknownBatch: l10n.notifUnknown,
+        ),
+      ),
+    );
 
     if (ref.read(authProvider) != null) return;
 

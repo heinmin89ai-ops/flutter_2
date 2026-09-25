@@ -9,6 +9,8 @@
 /// or reads a stock level — and are converted at that boundary.
 library;
 
+import '../../../core/l10n/l10n_bridge.dart';
+
 /// One sellable unit of a medicine, as configured in `unit_conversions`.
 class UnitSpec {
   const UnitSpec({
@@ -54,27 +56,36 @@ class UnitHierarchy {
   factory UnitHierarchy.from(List<UnitSpec> units) {
     if (units.isEmpty) {
       throw const UnitConfigException(
-        'This medicine has no units configured. Add at least the smallest unit.',
+        errorKey: 'invNoUnitsConfigured',
+        debugMessage: 'This medicine has no units configured. Add at least the smallest unit.',
       );
     }
     final bases = units.where((u) => u.isBase).toList();
     if (bases.isEmpty) {
       final factors = units.map((u) => u.factor).join(', ');
       throw UnitConfigException(
-        'No smallest unit: every configured unit converts to more than one piece '
-        '(factors: $factors). Add the single-piece unit with factor 1.',
+        errorKey: 'invNoSmallestUnit',
+        debugMessage:
+            'No smallest unit: every configured unit converts to more than one piece '
+            '(factors: $factors). Add the single-piece unit with factor 1.',
       );
     }
     if (bases.length > 1) {
+      final names = bases.map((u) => u.name).join(', ');
       throw UnitConfigException(
-        'More than one smallest unit is configured '
-        '(${bases.map((u) => u.name).join(', ')}); exactly one is required.',
+        errorKey: 'invMoreThanOneSmallestUnit',
+        errorArgs: {'names': names},
+        debugMessage:
+            'More than one smallest unit is configured '
+            '($names); exactly one is required.',
       );
     }
     final names = units.map((u) => u.name.toLowerCase()).toSet();
     if (names.length != units.length) {
       throw const UnitConfigException(
-        'Unit names must differ per medicine; two units share a name.',
+        errorKey: 'invDuplicateUnitNames',
+        debugMessage:
+            'Unit names must differ per medicine; two units share a name.',
       );
     }
     return UnitHierarchy._(List.unmodifiable(units), bases.single);
@@ -124,7 +135,11 @@ class UnitHierarchy {
   int toBaseByName({required String unitName, required int quantity}) {
     final unit = byName(unitName);
     if (unit == null) {
-      throw UnitConfigException('Unknown unit "$unitName" for this medicine.');
+      throw UnitConfigException(
+        errorKey: 'invUnknownUnit',
+        errorArgs: {'name': unitName},
+        debugMessage: 'Unknown unit "$unitName" for this medicine.',
+      );
     }
     return toBase(unit: unit, quantity: quantity);
   }
@@ -202,13 +217,21 @@ class UnitHierarchy {
 
   static void _requirePositive(int value) {
     if (value <= 0) {
-      throw UnitConfigException('Quantity must be at least 1, got $value.');
+      throw UnitConfigException(
+        errorKey: 'invQuantityAtLeast1',
+        errorArgs: {'value': '$value'},
+        debugMessage: 'Quantity must be at least 1, got $value.',
+      );
     }
   }
 
   static void _requireNonNegative(int value) {
     if (value < 0) {
-      throw UnitConfigException('Quantity cannot be negative, got $value.');
+      throw UnitConfigException(
+        errorKey: 'invQuantityNotNegative',
+        errorArgs: {'value': '$value'},
+        debugMessage: 'Quantity cannot be negative, got $value.',
+      );
     }
   }
 }
@@ -232,11 +255,26 @@ enum SaleMode {
       raw?.toString().toLowerCase() == 'wholesale' ? wholesale : retail;
 }
 
-class UnitConfigException implements Exception {
-  const UnitConfigException(this.message);
-
-  final String message;
+class UnitConfigException implements LocalizedError {
+  const UnitConfigException({
+    required this.errorKey,
+    required this.debugMessage,
+    this.errorArgs = const {},
+  });
 
   @override
-  String toString() => 'UnitConfigException: $message';
+  final String errorKey;
+
+  @override
+  final Map<String, String> errorArgs;
+
+  @override
+  final String debugMessage;
+
+  /// English text, kept for callers outside the localisation path (logs and
+  /// legacy display fallbacks).
+  String get message => debugMessage;
+
+  @override
+  String toString() => 'UnitConfigException: $debugMessage';
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/l10n/l10n_bridge.dart';
 import '../application/auth_providers.dart';
 
 /// Module 2 login. Local username + secret against `users`.
@@ -17,7 +18,9 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _username = TextEditingController();
   final TextEditingController _secret = TextEditingController();
-  String? _error;
+
+  /// Localisation key of the current sign-in error, or `null`.
+  String? _errorKey;
   bool _busy = false;
   bool _obscure = true;
 
@@ -31,7 +34,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     setState(() {
       _busy = true;
-      _error = null;
+      _errorKey = null;
     });
 
     final result = await ref
@@ -41,12 +44,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
     setState(() {
       _busy = false;
-      if (!result.isSuccess) _error = result.message;
+      if (!result.isSuccess) _errorKey = result.messageKey;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -65,7 +69,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Sign in',
+                    l10n.authSignInTitle,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
@@ -74,9 +78,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     controller: _username,
                     enabled: !_busy,
                     autocorrect: false,
-                    decoration: const InputDecoration(
-                      labelText: 'Username',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.authUsernameLabel,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -85,9 +89,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     enabled: !_busy,
                     obscureText: _obscure,
                     decoration: InputDecoration(
-                      labelText: 'PIN or password',
+                      labelText: l10n.authSecretLabel,
                       border: const OutlineInputBorder(),
-                      errorText: _error,
+                      errorText: _errorKey == null ? null : l10n.message(_errorKey!),
                       suffixIcon: IconButton(
                         onPressed: () => setState(() => _obscure = !_obscure),
                         icon: Icon(
@@ -106,7 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Sign in'),
+                        : Text(l10n.authSignInButton),
                   ),
                 ],
               ),

@@ -39,20 +39,24 @@ class JwtFeatureDecoder implements FeatureDecoder {
     final segments = activationKey.replaceAll(RegExp(r'\s'), '').split('.');
     if (segments.length != 3) {
       throw const ActivationKeyException(
-        'Key must be a JWT: three dot-separated segments.',
+        'licenseKeyNotJwt',
+        debugMessage: 'Key must be a JWT: three dot-separated segments.',
       );
     }
     final headerSegment = segments[0];
     final payloadSegment = segments[1];
     final signatureSegment = segments[2];
 
-    final Map<String, dynamic> header = _decodeJson(headerSegment, 'Header');
+    final Map<String, dynamic> header = _decodeJson(headerSegment, 'header');
     final algorithm = header['alg'];
     // Checked before any signature work: accepting `alg: none`, or letting a
     // forged header pick the algorithm, is the classic JWT bypass.
     if (algorithm != 'HS256') {
+      final algorithmLabel = algorithm == null ? '(missing)' : '"$algorithm"';
       throw ActivationKeyException(
-        'Unsupported key algorithm ${algorithm == null ? '(missing)' : '"$algorithm"'}.',
+        'licenseUnsupportedAlgorithm',
+        errorArgs: {'algorithm': algorithm?.toString() ?? '(missing)'},
+        debugMessage: 'Unsupported key algorithm $algorithmLabel.',
       );
     }
 
@@ -61,27 +65,39 @@ class JwtFeatureDecoder implements FeatureDecoder {
         .replaceAll('=', '');
     if (!_constantTimeEquals(expected, signatureSegment)) {
       throw const ActivationKeyException(
-        'Signature mismatch — key mistyped, altered, or issued with a different secret.',
+        'licenseSignatureMismatch',
+        debugMessage:
+            'Signature mismatch — key mistyped, altered, or issued with a different secret.',
       );
     }
 
-    final Map<String, dynamic> claims = _decodeJson(payloadSegment, 'Payload');
+    final Map<String, dynamic> claims = _decodeJson(payloadSegment, 'payload');
 
     final issued = claims['iss'];
     if (issued != null && issued != issuer) {
-      throw ActivationKeyException('Key issued by unknown vendor "$issued".');
+      throw ActivationKeyException(
+        'licenseUnknownVendor',
+        errorArgs: {'vendor': issued.toString()},
+        debugMessage: 'Key issued by unknown vendor "$issued".',
+      );
     }
 
     final expiry = _readExpiry(claims['exp']);
     if (expiry != null && (now ?? DateTime.now()).isAfter(expiry)) {
+      final date = expiry.toIso8601String().split('T').first;
       throw ActivationKeyException(
-        'Key expired on ${expiry.toIso8601String().split('T').first}.',
+        'licenseKeyExpired',
+        errorArgs: {'date': date},
+        debugMessage: 'Key expired on $date.',
       );
     }
 
     final rawFeatures = claims['features'];
     if (rawFeatures is! Map) {
-      throw const ActivationKeyException('Key carries no features claim.');
+      throw const ActivationKeyException(
+        'licenseNoFeaturesClaim',
+        debugMessage: 'Key carries no features claim.',
+      );
     }
 
     return LicenceFacts(
@@ -97,14 +113,15 @@ class JwtFeatureDecoder implements FeatureDecoder {
   /// Re-checks a key that is already stored: signature *and* expiry, without
   /// trusting anything previously decoded from it.
   ///
-  /// Returns `null` when the key is no longer acceptable, with the reason as the
-  /// message. This is the path that closes the Phase 1 gap where an expired
-  /// licence kept working forever because `exp` was only read at activation.
+  /// On failure the result carries the [ActivationKeyException] so the boot flow
+  /// can branch on its `errorKey` and show a localised message. This is the path
+  /// that closes the Phase 1 gap where an expired licence kept working forever
+  /// because `exp` was only read at activation.
   LicenceDecodeResult verifyStored(String activationKey) {
     try {
       return LicenceDecodeResult.success(decode(activationKey));
     } on ActivationKeyException catch (error) {
-      return LicenceDecodeResult.failure(error.message);
+      return LicenceDecodeResult.failure(error);
     }
   }
 
@@ -117,7 +134,10 @@ class JwtFeatureDecoder implements FeatureDecoder {
     // Tolerate an ISO string so a hand-issued key is not a brick.
     final iso = DateTime.tryParse(raw.toString());
     if (iso != null) return iso;
-    throw const ActivationKeyException('Unreadable expiry claim in key.');
+    throw const ActivationKeyException(
+      'licenseUnreadableExpiry',
+      debugMessage: 'Unreadable expiry claim in key.',
+    );
   }
 
   static DateTime _fromEpoch(int seconds) =>
@@ -131,18 +151,34 @@ class JwtFeatureDecoder implements FeatureDecoder {
     try {
       bytes = base64Url.decode(base64Url.normalize(segment));
     } on FormatException {
-      throw ActivationKeyException('$label segment is not valid base64url.');
+      throw ActivationKeyException(
+        'licenseSegmentNotBase64',
+        errorArgs: {'label': label},
+        debugMessage: '$label segment is not valid base64url.',
+      );
     }
     try {
       final decoded = jsonDecode(utf8.decode(bytes));
       if (decoded is! Map<String, dynamic>) {
-        throw ActivationKeyException('$label must decode to a JSON object.');
+        throw ActivationKeyException(
+          'licenseSegmentNotJsonObject',
+          errorArgs: {'label': label},
+          debugMessage: '$label must decode to a JSON object.',
+        );
       }
       return decoded;
     } on FormatException {
-      throw ActivationKeyException('$label is not valid JSON.');
+      throw ActivationKeyException(
+        'licenseSegmentNotJson',
+        errorArgs: {'label': label},
+        debugMessage: '$label is not valid JSON.',
+      );
     } on UnsupportedError {
-      throw ActivationKeyException('$label is not valid UTF-8.');
+      throw ActivationKeyException(
+        'licenseSegmentNotUtf8',
+        errorArgs: {'label': label},
+        debugMessage: '$label is not valid UTF-8.',
+      );
     }
   }
 
@@ -222,14 +258,18 @@ class JwtFeatureDecoder implements FeatureDecoder {
 /// Outcome of re-verifying a stored key, so the boot flow can distinguish
 /// "not activated" from "expired" without catching exceptions in a redirect.
 class LicenceDecodeResult {
-  const LicenceDecodeResult._({this.facts, this.reason});
+  const LicenceDecodeResult._({this.facts, this.error});
 
   const LicenceDecodeResult.success(LicenceFacts facts) : this._(facts: facts);
 
-  const LicenceDecodeResult.failure(String reason) : this._(reason: reason);
+  const LicenceDecodeResult.failure(ActivationKeyException error)
+    : this._(error: error);
 
   final LicenceFacts? facts;
-  final String? reason;
+
+  /// The localised failure, when [isValid] is `false`. Its [errorKey] drives
+  /// both the status branch and the message shown on the activation screen.
+  final ActivationKeyException? error;
 
   bool get isValid => facts != null;
 }

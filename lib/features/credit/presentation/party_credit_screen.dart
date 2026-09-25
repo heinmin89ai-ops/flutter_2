@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/tables/credit_transactions.dart';
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../../core/money.dart';
 import '../../../core/presentation/money_field.dart';
 import '../../auth/application/auth_providers.dart';
@@ -41,16 +42,16 @@ class _PartyCreditScreenState extends ConsumerState<PartyCreditScreen> {
   ({String title, String partyWord, String balanceWord, String totalWord})
   get _labels => switch (_type) {
     PartyType.customer => (
-      title: 'Customer Credit',
-      partyWord: 'customer',
-      balanceWord: 'owes',
-      totalWord: 'Total receivable',
+      title: context.l10n.creditCustomerTitle,
+      partyWord: context.l10n.creditWordCustomer,
+      balanceWord: context.l10n.creditOwes,
+      totalWord: context.l10n.creditTotalReceivable,
     ),
     PartyType.supplier => (
-      title: 'Supplier Payables',
-      partyWord: 'supplier',
-      balanceWord: 'is owed',
-      totalWord: 'Total payable',
+      title: context.l10n.creditSupplierTitle,
+      partyWord: context.l10n.creditWordSupplier,
+      balanceWord: context.l10n.creditIsOwed,
+      totalWord: context.l10n.creditTotalPayable,
     ),
   };
 
@@ -85,6 +86,7 @@ class _PartyCreditScreenState extends ConsumerState<PartyCreditScreen> {
         : payablesProvider;
     final rows = ref.watch(provider);
     final labels = _labels;
+    final l10n = context.l10n;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -96,7 +98,7 @@ class _PartyCreditScreenState extends ConsumerState<PartyCreditScreen> {
             child: TextField(
               controller: _search,
               decoration: InputDecoration(
-                hintText: 'Search ${labels.partyWord} name or phone',
+                hintText: l10n.creditSearchHint(labels.partyWord),
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _query.isEmpty
                     ? null
@@ -116,15 +118,17 @@ class _PartyCreditScreenState extends ConsumerState<PartyCreditScreen> {
           Expanded(
             child: rows.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('$e')),
+              error: (e, _) => Center(child: Text(l10n.describe(e))),
               data: (parties) {
                 final shown = _filter(parties);
                 if (shown.isEmpty) {
                   return Center(
                     child: Text(
                       parties.isEmpty
-                          ? 'Nobody owes the shop right now.'
-                          : 'No ${labels.partyWord} matches “$_query”.',
+                          ? _type == PartyType.customer
+                                ? l10n.creditNobodyOwesShop
+                                : l10n.creditShopOwesNobody
+                          : l10n.creditNoMatches(labels.partyWord, _query),
                       textAlign: TextAlign.center,
                     ),
                   );
@@ -141,7 +145,7 @@ class _PartyCreditScreenState extends ConsumerState<PartyCreditScreen> {
                       return _TotalHeader(
                         label: _query.isEmpty
                             ? labels.totalWord
-                            : '${labels.totalWord} (this search)',
+                            : l10n.creditTotalForSearch(labels.totalWord),
                         totalPya: shown.fold<Pya>(
                           0,
                           (sum, p) => sum + p.balancePya,
@@ -155,7 +159,10 @@ class _PartyCreditScreenState extends ConsumerState<PartyCreditScreen> {
                       subtitle: Text(
                         [
                           if ((party.phone ?? '').isNotEmpty) party.phone!,
-                          '${labels.balanceWord} ${formatMoney(party.balancePya)} K',
+                          l10n.creditBalanceLine(
+                            labels.balanceWord,
+                            formatMoney(party.balancePya),
+                          ),
                         ].join(' · '),
                       ),
                       trailing: _OverLimitPill(party: party),
@@ -268,20 +275,28 @@ class _PartyStatementScreenState extends ConsumerState<PartyStatementScreen> {
   Future<void> _recordPayment() async {
     Pya? amount;
     final note = TextEditingController();
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Record a payment'),
+        title: Text(l10n.creditRecordPaymentTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '${widget.party.name} currently owes '
-              '${formatMoney(widget.party.balancePya)} K.',
+              widget.partyType == PartyType.customer
+                  ? l10n.creditCustomerOwesNow(
+                      widget.party.name,
+                      formatMoney(widget.party.balancePya),
+                    )
+                  : l10n.creditSupplierOwedNow(
+                      widget.party.name,
+                      formatMoney(widget.party.balancePya),
+                    ),
             ),
             const SizedBox(height: 12),
             MoneyField(
-              label: 'Amount received',
+              label: l10n.creditAmountReceived,
               suffix: 'K',
               allowEmpty: false,
               autofocus: true,
@@ -290,9 +305,9 @@ class _PartyStatementScreenState extends ConsumerState<PartyStatementScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: note,
-              decoration: const InputDecoration(
-                labelText: 'Reference / note (optional)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.creditReferenceNote,
+                border: const OutlineInputBorder(),
                 isDense: true,
               ),
             ),
@@ -301,11 +316,11 @@ class _PartyStatementScreenState extends ConsumerState<PartyStatementScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Record'),
+            child: Text(l10n.record),
           ),
         ],
       ),
@@ -333,10 +348,10 @@ class _PartyStatementScreenState extends ConsumerState<PartyStatementScreen> {
       }
       ref.read(inventoryRevisionProvider.notifier).bump();
       if (!mounted) return;
-      _toast('Payment recorded.');
+      _toast(context.l10n.creditPaymentRecorded);
       await _reload();
     } on CreditRejectException catch (e) {
-      if (mounted) _toast(e.message);
+      if (mounted) _toast(context.l10n.describe(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -349,22 +364,24 @@ class _PartyStatementScreenState extends ConsumerState<PartyStatementScreen> {
   }
 
   Future<void> _reverse(StatementEntry entry) async {
+    final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reverse this payment?'),
+        title: Text(l10n.creditReversePaymentTitle),
         content: Text(
-          'Removes the ${formatMoney(entry.transaction.amount)} K receipt and '
-          'puts the balance back. This is recorded against your account.',
+          l10n.creditReversePaymentBody(
+            formatMoney(entry.transaction.amount),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Reverse'),
+            child: Text(l10n.creditReverse),
           ),
         ],
       ),
@@ -379,10 +396,10 @@ class _PartyStatementScreenState extends ConsumerState<PartyStatementScreen> {
           );
       ref.read(inventoryRevisionProvider.notifier).bump();
       if (!mounted) return;
-      _toast('Payment reversed.');
+      _toast(context.l10n.creditPaymentReversed);
       await _reload();
     } on CreditRejectException catch (e) {
-      if (mounted) _toast(e.message);
+      if (mounted) _toast(context.l10n.describe(e));
     }
   }
 
@@ -401,6 +418,7 @@ class _PartyStatementScreenState extends ConsumerState<PartyStatementScreen> {
       statementProvider((widget.partyType, widget.party.id)),
     );
     final mayReverse = ref.watch(canDeleteTransactionProvider);
+    final l10n = context.l10n;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -408,11 +426,11 @@ class _PartyStatementScreenState extends ConsumerState<PartyStatementScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _busy ? null : _recordPayment,
         icon: const Icon(Icons.payments_outlined),
-        label: const Text('Record payment'),
+        label: Text(l10n.creditRecordPayment),
       ),
       body: statement.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => Center(child: Text(l10n.describe(e))),
         data: (entries) {
           final remaining = entries.isEmpty
               ? widget.party.balancePya
@@ -421,7 +439,8 @@ class _PartyStatementScreenState extends ConsumerState<PartyStatementScreen> {
             padding: const EdgeInsets.only(bottom: 96),
             children: [
               ListTile(
-                title: Text('Outstanding', style: theme.textTheme.titleSmall),
+                title: Text(l10n.creditOutstanding,
+                    style: theme.textTheme.titleSmall),
                 trailing: Text(
                   '${formatMoney(remaining)} K',
                   style: theme.textTheme.headlineSmall?.copyWith(
@@ -430,14 +449,14 @@ class _PartyStatementScreenState extends ConsumerState<PartyStatementScreen> {
                 ),
               ),
               const Divider(height: 1),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
-                child: Text('Statement'),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Text(l10n.creditStatement),
               ),
               if (entries.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('No ledger activity for this account yet.'),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(l10n.creditNoLedgerActivity),
                 ),
               for (final entry in entries.reversed)
                 _StatementTile(
@@ -467,6 +486,7 @@ class _StatementTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final txn = entry.transaction;
     final isDebt = txn.kind == TransactionKind.debtAdded;
     final colour = isDebt
@@ -479,7 +499,7 @@ class _StatementTile extends StatelessWidget {
         isDebt ? Icons.add_circle_outline : Icons.check_circle_outline,
         color: colour,
       ),
-      title: Text(isDebt ? 'Credit added' : 'Payment received'),
+      title: Text(isDebt ? l10n.creditDebtAdded : l10n.creditPaymentReceived),
       subtitle: Text(_subtitle(txn.createdAt, txn.note)),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -494,7 +514,7 @@ class _StatementTile extends StatelessWidget {
           // the visual half of a rule the data layer already holds.
           if (mayReverse && !isDebt)
             IconButton(
-              tooltip: 'Reverse payment',
+              tooltip: l10n.creditReversePaymentTooltip,
               visualDensity: VisualDensity.compact,
               icon: const Icon(Icons.undo),
               onPressed: onReverse,

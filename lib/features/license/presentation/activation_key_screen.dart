@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../../routing/routes.dart';
 import '../../auth/application/auth_providers.dart';
 import '../application/license_providers.dart';
@@ -40,9 +41,10 @@ class _ActivationKeyScreenState extends ConsumerState<ActivationKeyScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = context.l10n;
     final key = _controller.text.trim();
     if (key.isEmpty) {
-      setState(() => _error = 'Enter your activation key.');
+      setState(() => _error = l10n.licenseKeyRequired);
       return;
     }
 
@@ -55,9 +57,12 @@ class _ActivationKeyScreenState extends ConsumerState<ActivationKeyScreen> {
     if (!mounted) return;
 
     if (!ok) {
+      final state = ref.read(licenseProvider);
       setState(() {
         _busy = false;
-        _error = ref.read(licenseProvider).message ?? 'Activation failed.';
+        _error = state.message == null
+            ? l10n.licenseActivationFailed
+            : l10n.message(state.message!, state.messageArgs);
       });
       return;
     }
@@ -73,6 +78,7 @@ class _ActivationKeyScreenState extends ConsumerState<ActivationKeyScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -91,14 +97,13 @@ class _ActivationKeyScreenState extends ConsumerState<ActivationKeyScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Activate your licence',
+                    l10n.licenseTitle,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Enter the activation key supplied with your pharmacy licence. '
-                    'This is a one-time step.',
+                    l10n.licenseIntro,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium,
                   ),
@@ -113,7 +118,7 @@ class _ActivationKeyScreenState extends ConsumerState<ActivationKeyScreen> {
                     maxLines: 3,
                     minLines: 1,
                     decoration: InputDecoration(
-                      labelText: 'Activation key',
+                      labelText: l10n.licenseKeyLabel,
                       hintText: 'eyJhbGciOiJIUzI1NiIs…',
                       border: const OutlineInputBorder(),
                       errorText: _error,
@@ -141,7 +146,7 @@ class _ActivationKeyScreenState extends ConsumerState<ActivationKeyScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Activate'),
+                        : Text(l10n.licenseActivate),
                   ),
                 ],
               ),

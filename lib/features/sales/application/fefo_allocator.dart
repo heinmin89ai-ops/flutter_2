@@ -1,9 +1,11 @@
 /// FEFO (First Expired, First Out) deduction arithmetic (Module 5).
 ///
-/// Pure Dart with no drift or Flutter imports, exactly like `unit_hierarchy.dart`:
+/// Pure Dart with no drift import, exactly like `unit_hierarchy.dart`:
 /// this decides which physical stock leaves the shelf and how much of each batch,
 /// and a wrong answer here is a wrong voucher printed on a customer's receipt. It
-/// must be testable to the pill without a database or a widget tree.
+/// must be testable to the pill without a database or a widget tree. The one
+/// shared thing it pulls in is the [LocalizedError] interface, so a failure can
+/// carry a translation key instead of English prose — an interface, not a widget.
 ///
 /// The rule the Phase 3 doc left open and this phase resolves: **strict FEFO**.
 /// A line is always filled from the earliest-expiry batch that still has stock,
@@ -12,6 +14,8 @@
 /// Phase 5's write-offs, not by quietly selling against the rule and breaking the
 /// audit trail this allocator guarantees.
 library;
+
+import '../../../core/l10n/l10n_bridge.dart';
 
 /// A batch as the allocator sees it: the bare facts a deduction needs.
 ///
@@ -86,7 +90,10 @@ class FefoResult {
 /// Carries [requested] and [available] so the till can tell the cashier "only 4
 /// Strips left" rather than a bare failure — the common real case is a miscount,
 /// and naming the two numbers is what lets them fix it without a stock-take.
-class FefoShortageException implements Exception {
+/// The cashier-facing copy comes from the `saleShortage` key; [debugMessage]
+/// stays English for logs, and the repository normally re-throws this with the
+/// product's name attached (`saleProductShortage`) before it reaches the screen.
+class FefoShortageException implements LocalizedError {
   const FefoShortageException({
     required this.requested,
     required this.available,
@@ -99,8 +106,47 @@ class FefoShortageException implements Exception {
   int get shortfall => requested - available;
 
   @override
-  String toString() =>
+  String get errorKey => 'saleShortage';
+
+  @override
+  Map<String, String> get errorArgs => {
+    'requested': requested.toString(),
+    'available': available.toString(),
+  };
+
+  @override
+  String get debugMessage =>
       'FefoShortageException: requested $requested, only $available available';
+
+  @override
+  String toString() => debugMessage;
+}
+
+/// The message the allocator used to hardcode; kept verbatim so logs written
+/// before localisation still read the same.
+const String kSaleLineMinOneUnit =
+    'A sale line must take at least one smallest unit.';
+
+/// A line asking for zero (or fewer) smallest units.
+///
+/// Still an [ArgumentError] — the till's cart never produces one, so reaching it
+/// means a caller built the request wrong, and the existing contract that a
+/// mis-sized quantity is a programming error rather than a shortage holds. It is
+/// *also* a [LocalizedError] so that, if it ever surfaces, the screen can render
+/// `saleLineMinOneUnit` instead of English prose.
+class FefoQuantityArgumentError extends ArgumentError
+    implements LocalizedError {
+  FefoQuantityArgumentError(int qtyInBase)
+    : super.value(qtyInBase, 'qtyInBase', kSaleLineMinOneUnit);
+
+  @override
+  String get errorKey => 'saleLineMinOneUnit';
+
+  @override
+  Map<String, String> get errorArgs => const {};
+
+  @override
+  String get debugMessage => kSaleLineMinOneUnit;
 }
 
 /// Allocates [qtyInBase] smallest units from [batches], earliest expiry first.
@@ -117,11 +163,7 @@ FefoResult allocateFefo({
   required int qtyInBase,
 }) {
   if (qtyInBase <= 0) {
-    throw ArgumentError.value(
-      qtyInBase,
-      'qtyInBase',
-      'A sale line must take at least one smallest unit.',
-    );
+    throw FefoQuantityArgumentError(qtyInBase);
   }
   final available = batches.fold<int>(
     0,

@@ -69,10 +69,15 @@ class ExpiryAlertService {
   /// Checks [expiring] batches and shows notifications for those within
   /// [kExpiryAlertWindowDays] that haven't been alerted today.
   ///
+  /// [labels] carries the user-facing strings, resolved into the current
+  /// language by the caller; it defaults to English so context-free callers
+  /// (and tests) keep working.
+  ///
   /// Returns the number of notifications shown.
   Future<int> checkAndAlert({
     required List<ExpiryAlert> expiring,
     required DateTime now,
+    NotificationLabels labels = const NotificationLabels.fallback(),
   }) async {
     var count = 0;
 
@@ -86,8 +91,8 @@ class ExpiryAlertService {
 
       await gateway.showExpiryAlert(
         id: alert.batchId,
-        title: 'Batch expiring soon',
-        body: '${alert.tradeName} expires in ${alert.daysToExpiry} days',
+        title: labels.alertTitle,
+        body: labels.expiryBody(alert.tradeName, alert.daysToExpiry),
       );
       await ledger.markAlerted(alert.batchId, now);
       count++;
@@ -121,13 +126,19 @@ final Provider<ExpiryAlertService> expiryAlertServiceProvider =
 /// Startup hook: checks expiring batches and fires notifications.
 ///
 /// Called from [BootGate._bootstrap] after licence and auth are loaded. Wrapped
-/// in try/catch so notification failures don't block app startup.
-Future<void> runExpiryAlertStartup(WidgetRef ref) async {
+/// in try/catch so notification failures don't block app startup. [labels]
+/// should be built by the caller from `AppLocalizations` so alerts appear in
+/// the user's language; without it the English fallbacks are used.
+Future<void> runExpiryAlertStartup(
+  WidgetRef ref, {
+  NotificationLabels? labels,
+}) async {
   try {
+    final resolved = labels ?? const NotificationLabels.fallback();
     final service = ref.read(expiryAlertServiceProvider);
     final gateway = ref.read(notificationGatewayProvider);
 
-    await gateway.init();
+    await gateway.init(labels: resolved);
 
     final repo = ref.read(inventoryRepositoryProvider);
     final batches = await repo.expiringWithin(kExpiryAlertWindowDays);
@@ -136,12 +147,16 @@ Future<void> runExpiryAlertStartup(WidgetRef ref) async {
       for (final batch in batches)
         ExpiryAlert(
           batchId: batch.batch.id,
-          tradeName: batch.tradeName ?? 'Unknown',
+          tradeName: batch.tradeName ?? resolved.unknownBatch,
           daysToExpiry: batch.daysToExpiry,
         ),
     ];
 
-    await service.checkAndAlert(expiring: alerts, now: DateTime.now());
+    await service.checkAndAlert(
+      expiring: alerts,
+      now: DateTime.now(),
+      labels: resolved,
+    );
   } catch (_) {
     // Notifications are best-effort; don't block startup on failure.
   }

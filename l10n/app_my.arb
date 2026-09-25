@@ -57,5 +57,1132 @@
         "type": "String"
       }
     }
-  }
+  },
+  "cancel": "ပယ်ဖျက်ရန်",
+  "ok": "ကောင်းပြီ",
+  "save": "သိမ်းရန်",
+  "delete": "ဖျက်ရန်",
+  "done": "ပြီးပြီ",
+  "tryAgain": "ထပ်ကြိုးစားရန်",
+  "edit": "ပြင်ဆင်ရန်",
+  "remove": "ဖယ်ရှားရန်",
+  "close": "ပိတ်ရန်",
+  "record": "မှတ်တမ်းတင်ရန်",
+  "authSignInTitle": "ဝင်ရောက်ရန်",
+  "authSignInButton": "ဝင်ရောက်ရန်",
+  "authUsernameLabel": "အသုံးပြုသူအမည်",
+  "authSecretLabel": "ပင်နံပါတ် သို့မဟုတ် စကားဝှက်",
+  "authSetupTitle": "ပိုင်ရှင်အကောင့် ဖန်တီးရန်",
+  "authSetupBlurb": "ဤအကောင့်ဖြင့် ကုန်ကျစရိတ်ဈေးများကို ကြည့်ရှုနိုင်ပြီး ကုန်ပစ္စည်းစာရင်းနှင့် ဝန်ထမ်းများကို စီမံနိုင်ပါသည်။ မမေ့နိုင်သော အမည်ကို ရွေးချယ်ပါ − အင်တာနက်မလိုသော စက်ဖြစ်သည့်အတွက် ဆာဗာမှတဆင့် ပြန်လည်သတ်မှတ်၍ မရပါ။",
+  "authConfirmLabel": "အတည်ပြုရန်",
+  "authCreateAccountButton": "အကောင့် ဖန်တီးရန်",
+  "authSecretHelper": "အနည်းဆုံး စာလုံး {min} လုံး",
+  "@authSecretHelper": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      }
+    }
+  },
+  "authUsernameMinLength": "အသုံးပြုသူအမည်သည် အနည်းဆုံး စာလုံး {min} လုံး ရှိရပါမည်။",
+  "@authUsernameMinLength": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      }
+    }
+  },
+  "authSecretMinLength": "အနည်းဆုံး စာလုံး {min} လုံး အသုံးပြုပါ။",
+  "@authSecretMinLength": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      }
+    }
+  },
+  "authPasswordMismatch": "ရိုက်ထည့်ထားသော စာသားနှစ်ခု ကိုက်ညီမှုမရှိပါ။",
+  "authAccountNotFound": "အကောင့် မတွေ့ရပါ။ ထပ်မံကြိုးစားပါ။",
+  "authInvalidCredentials": "အသုံးပြုသူအမည် သို့မဟုတ် ပင်နံပါတ် မှားယွင်းနေပါသည်။",
+  "authAccountDisabled": "ဤအကောင့်ကို ပိတ်ထားပါသည်။",
+  "authLastAdminError": "နောက်ဆုံးကျန်ရှိသော Admin အကောင့်ကို ပိတ်၍ မရပါ။",
+  "authUsernameTaken": "\"{username}\" သည် အသုံးပြုပြီးသား အသုံးပြုသူအမည် ဖြစ်ပါသည်။",
+  "@authUsernameTaken": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "backupEncryptTitle": "အရန်ဖိုင်ကို စာဝှက်ရန်",
+  "backupEncryptBlurb": "ဒေတာဘေ့စ်ကို ဖိသိပ်ပြီး ဤစကားဝှက်ဖြင့် (AES-256-GCM) လုံခြုံစေမည်ဖြစ်သည်။ ၎င်းကို နေရာတစ်ခုခုတွင် သိမ်းထားခြင်း မရှိပါ — စကားဝှက် ပျောက်သွားပါက အရန်ဖိုင်ကို ပြန်လည်ထူထောင်၍ မရနိုင်ပါ။",
+  "backupUnlockTitle": "အရန်ဖိုင် စာဝှက်ဖြည်ရန်",
+  "backupNext": "ရှေ့သို့",
+  "backupUnlockBlurb": "ဤအရန်ဖိုင်ကို စာဝှက်ရာတွင် အသုံးပြုခဲ့သော စကားဝှက်ကို ထည့်သွင်းပါ။",
+  "backupPassphrase": "စကားဝှက်",
+  "backupReplaceTitle": "အချက်အလက်အားလုံးကို ဤအရန်ဖိုင်ဖြင့် အစားထိုးမလား?",
+  "backupReplaceFrom": "ရင်းမြစ်: {date}",
+  "@backupReplaceFrom": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupReplaceSchema": "ဒေတာပုံစံ: {version}",
+  "@backupReplaceSchema": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOverwriteWarning": "လက်ရှိအသုံးပြုနေသော ဒေတာများ ပျက်သွားပြီး အစားထိုးခံရမည်ဖြစ်သည်။ ၎င်းကို ပြန်ပြင်၍မရတော့ပါ။",
+  "backupSavedTitle": "အရန်သိမ်းခြင်း ပြီးဆုံးပါပြီ",
+  "backupSavedBody": "{path}\n\nစာဝှက်မထားသော ဒေတာဘေ့စ် အရွယ်အစားမှာ {size} ဖြစ်ပါသည်။",
+  "@backupSavedBody": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoredTitle": "ပြန်လည်ထူထောင်ပြီးပါပြီ",
+  "backupRestoredBody": "အက်ပ်သည် ယခုအခါ အရန်ဖိုင်မှ ဒေတာကို ဖတ်ရှုနေပါသည်။",
+  "backupFailedWithReason": "အရန်သိမ်းခြင်း မအောင်မြင်ပါ: {reason}",
+  "@backupFailedWithReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreFailedWithReason": "ပြန်လည်ထူထောင်ခြင်း မအောင်မြင်ပါ: {reason}",
+  "@backupRestoreFailedWithReason": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "backupNoFilesFound": "{path} တွင် အရန်သိမ်းဖိုင်များ မတွေ့ရပါ။",
+  "@backupNoFilesFound": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "backupChooseToRestore": "ပြန်လည်ထူထောင်ရန် အရန်ဖိုင်ကို ရွေးချယ်ပါ",
+  "backupOwnerOnlyNote": "ပိုင်ရှင်သာ ဒေတာဘေ့စ်ကို အရန်သိမ်းခြင်းနှင့် ပြန်လည်ထူထောင်ခြင်း ပြုလုပ်နိုင်ပါသည်။",
+  "backupStorageNote": "အရန်ဖိုင်များကို {path} တွင် သိမ်းဆည်းပါသည်။",
+  "@backupStorageNote": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "backupFolderFallback": "အက်ပ်၏ Backups ဖိုလ်ဒါ",
+  "backupCreateTitle": "စာဝှက်ထားသော အရန်ဖိုင် ဖန်တီးရန်",
+  "backupCreateBody": "လက်ရှိဒေတာဘေ့စ်ကို ပုံတူပွားယူပြီး (VACUUM INTO ဖြင့် တစ်ပြေးညီရှိသော၊ WAL မပါဝင်သေသော အခြေအနေတွင် ရယူကာ) ဖိသိပ်အပြီး သင်ရွေးချယ်သော စကားဝှက်ဖြင့် စာဝှက်ထားပေးပါသည်။",
+  "backupCreateAction": "အရန်သိမ်းရန်",
+  "backupRestoreTitle": "အရန်ဖိုင်မှ ပြန်လည်ထူထောင်ရန်",
+  "backupRestoreBody": ".pbak ဖိုင်တစ်ခုကို ရွေးချယ်၍ စာဝှက်ဖြည်ပြီး လက်ရှိဒေတာဘေ့စ်ကို အစားထိုးပါ။ စက်ပေါ်ရှိ လက်ရှိဒေတာအားလုံး အစားထိုးခံရပါမည်။",
+  "backupRestoreAction": "ပြန်လည်ထူထောင်ရန်",
+  "backupNoManifest": "အရန်ဖိုင်တွင် manifest (ဖိုင်ညွှန်းစာရင်း) ပါဝင်ခြင်း မရှိပါ။",
+  "backupMissingDatabase": "အရန်ဖိုင်တွင် ဒေတာဘေ့စ်ဖိုင် ပါဝင်ခြင်း မရှိပါ။",
+  "backupTruncated": "အရန်ဖိုင် မပြည့်စုံပါ (တိုတောင်းနေပါသည်)။",
+  "backupNotPharmacyFile": "ဤသည် ဆေးဆိုင် အရန်သိမ်းဖိုင် မဟုတ်ပါ။",
+  "backupUnsupportedVersion": "မပံ့ပိုးထားသော အရန်ဖိုင် ဗားရှင်း {version}။",
+  "@backupUnsupportedVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "backupWrongPassphrase": "စကားဝှက် မှားယွင်းနေပါသည်၊ သို့မဟုတ် အရန်ဖိုင်ကို ပြင်ဆင်ထားခြင်း ဖြစ်ပါသည်။",
+  "backupPassphraseRequired": "အရန်သိမ်းရန် စကားဝှက် လိုအပ်ပါသည်။ စာဝှက်မထားသော အရန်ဖိုင်ထုတ်ယူမှုများ မပေးဆောင်ပါ။",
+  "creditCustomerTitle": "ဖောက်သည်အကြွေး",
+  "creditSupplierTitle": "ပေးသွင်းသူ ပေးရန်ကျငွေ",
+  "creditWordCustomer": "ဖောက်သည်",
+  "creditWordSupplier": "ပေးသွင်းသူ",
+  "creditOwes": "ကျန်ရစ်သည်",
+  "creditIsOwed": "ပေးရန်ကျသည်",
+  "creditTotalReceivable": "ရရှိမည်ငွေ စုစုပေါင်း",
+  "creditTotalPayable": "ပေးရန်ငွေ စုစုပေါင်း",
+  "creditSearchHint": "{party} အမည် သို့မဟုတ် ဖုန်းနံပါတ်ဖြင့် ရှာဖွေရန်",
+  "@creditSearchHint": {
+    "placeholders": {
+      "party": {
+        "type": "String"
+      }
+    }
+  },
+  "creditBalanceLine": "{amount} ကျပ် {balanceWord}",
+  "@creditBalanceLine": {
+    "placeholders": {
+      "balanceWord": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditNobodyOwesShop": "လက်ရှိတွင် ဆိုင်အား ငွေကျန်ရစ်သူ မရှိပါ။",
+  "creditShopOwesNobody": "လက်ရှိတွင် ဆိုင်မှ ပေးသွင်းသူအား ပေးရန်ကျသောငွေ မရှိပါ။",
+  "creditNoMatches": "“{query}” နှင့် ကိုက်ညီသော {party} မတွေ့ပါ။",
+  "@creditNoMatches": {
+    "placeholders": {
+      "party": {
+        "type": "String"
+      },
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "creditTotalForSearch": "{label} (ဤရှာဖွေမှုအတွက်)",
+  "@creditTotalForSearch": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "creditRecordPaymentTitle": "ငွေပေးချေမှု မှတ်တမ်းတင်ရန်",
+  "creditCustomerOwesNow": "{name} သည် ဆိုင်အား လက်ရှိ {amount} ကျပ် ကျန်ရစ်နေသည်။",
+  "@creditCustomerOwesNow": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditSupplierOwedNow": "ဆိုင်သည် {name} အား လက်ရှိ {amount} ကျပ် ပေးရန်ကျနေသည်။",
+  "@creditSupplierOwedNow": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditAmountReceived": "လက်ခံရရှိသော ငွေပမာဏ",
+  "creditReferenceNote": "ကိုးကားချက် / မှတ်ချက် (မဖြစ်မနေ မဟုတ်ပါ)",
+  "creditPaymentRecorded": "ငွေပေးချေမှုကို မှတ်တမ်းတင်ပြီးပါပြီ။",
+  "creditReversePaymentTitle": "ဤငွေပေးချေမှုကို ပြန်လည်ပယ်ဖျက်မလား?",
+  "creditReversePaymentBody": "{amount} ကျပ် လက်ခံရရှိမှုကို ဖယ်ရှားပြီး ကျန်ငွေလက်ကျန်ကို ပြန်လည်ရရှိစေပါမည်။ ဤလုပ်ဆောင်ချက်ကို သင့်အကောင့်တွင် မှတ်တမ်းတင်ပါမည်။",
+  "@creditReversePaymentBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditReverse": "ပြန်လည်ပယ်ဖျက်ရန်",
+  "creditPaymentReversed": "ငွေပေးချေမှုကို ပြန်လည်ပယ်ဖျက်ပြီးပါပြီ။",
+  "creditRecordPayment": "ငွေပေးချေမှု မှတ်တမ်းတင်ရန်",
+  "creditOutstanding": "ကျန်ငွေ",
+  "creditStatement": "ငွေစာရင်းချုပ်",
+  "creditNoLedgerActivity": "ဤအကောင့်အတွက် ငွေစာရင်း လှုပ်ရှားမှု မရှိသေးပါ။",
+  "creditDebtAdded": "အကြွေးတင်မြှောက်ခြင်း",
+  "creditPaymentReceived": "ငွေလက်ခံရရှိခြင်း",
+  "creditReversePaymentTooltip": "ငွေလက်ခံမှုကို ပြန်လည်ပယ်ဖျက်ရန်",
+  "creditPaymentMustBePositive": "ငွေပမာဏသည် သုညထက် ကြီးရပါမည်။",
+  "creditPaymentExceedsBalance": "ငွေပမာဏသည် ကျန်ငွေ {amount} ကျပ် ထက် ကျော်လွန်နေပါသည်။",
+  "@creditPaymentExceedsBalance": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "creditCustomerDoesNotExist": "ဖောက်သည် {id} မတည်ရှိပါ။",
+  "@creditCustomerDoesNotExist": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "creditSupplierDoesNotExist": "ပေးသွင်းသူ {id} မတည်ရှိပါ။",
+  "@creditSupplierDoesNotExist": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "creditLedgerEntryMissing": "ထိုငွေစာရင်းမှတ်တမ်းသည် ယခု မတည်ရှိတော့ပါ။",
+  "creditOnlyPaymentReversible": "မှတ်တမ်းတင်ပြီးသား ငွေလက်ခံမှုကိုသာ ပြန်လည်ပယ်ဖျက်နိုင်သည်။ အကြွေးတင်မှုကို မူလရောင်းချမှု သို့မဟုတ် ဝယ်ယူမှုကို ပြန်လည်ပယ်ဖျက်ခြင်းဖြင့်သာ ပြန်လည်ဖြေရှင်းနိုင်ပါသည်။",
+  "creditDebtEntryPositive": "အကြွေးတင် မှတ်တမ်းသည် အပေါင်းကိန်း ဖြစ်ရပါမည်။",
+  "creditPaymentEntryPositive": "ငွေပေးချေမှု မှတ်တမ်းသည် အပေါင်းကိန်း ဖြစ်ရပါမည်။",
+  "coreFieldRequired": "လိုအပ်သည်",
+  "coreMoneyFormatError": "ဂဏန်းကို ဒသမ နှစ်နေရာအထိ ထည့်သွင်းပါ",
+  "expNewExpense": "အသုံးစရိတ်အသစ်",
+  "expAmount": "ပမာဏ",
+  "expNoteOptional": "မှတ်ချက် (ရွေးချယ်စရာ)",
+  "expCategory": "အမျိုးအစား",
+  "expDeleteTitle": "ဤအသုံးစရိတ်ကို ဖျက်မလား?",
+  "expCannotUndo": "၎င်းကို ပြန်ပြင်၍မရတော့ပါ။",
+  "expDeleted": "အသုံးစရိတ်ကို ဖျက်ပြီးပါပြီ။",
+  "expNoExpensesRecorded": "အသုံးစရိတ် မှတ်တမ်းတင်ထားခြင်း မရှိသေးပါ။",
+  "expNoExpensesYet": "အသုံးစရိတ် မရှိသေးပါ။",
+  "expNeedsCategory": "အသုံးစရိတ်အတွက် အမျိုးအစား လိုအပ်ပါသည်။",
+  "expAmountMustBePositive": "ပမာဏသည် သုညထက် များရပါမည်။",
+  "invEditMedicineTitle": "ဆေး ပြင်ဆင်ရန်",
+  "invAddMedicineTitle": "ဆေး အသစ်ထည့်ရန်",
+  "invTradeName": "ကုန်သွယ်ရေး ဆေးနာမည်",
+  "invGenericNameOptional": "ဂျဲနရစ် ဆေးနာမည် (မဖြစ်မနေ မလိုပါ)",
+  "invTradeNameRequired": "သေတ္တာပေါ်ဆေးနာမည် မဖြစ်မနေ လိုအပ်ပါသည်",
+  "invCategory": "အမျိုးအစား",
+  "invShelfLocation": "သိမ်းထားသည့် နေရာ",
+  "invBarcode": "ဘားကုဒ်",
+  "invBarcodeHelper": "EAN ဘားကုဒ်ကို စကင်ဖတ်ပါ သို့မဟုတ် ရိုက်ထည့်ပါ။ အထုပ်ခွဲရောင်းသည့် ဆေးများအတွက် ဗလာထားပါ (ပြည်တွင်း ဆေးအများစုမှာ ဤသို့ဖြစ်သည်)။",
+  "invLowStockAlertAt": "လက်ကျန်နည်း သတိပေးချက် (မဖြစ်မနေ မလိုပါ)",
+  "invLowStockAlertHelper": "အငယ်ဆုံးယူနစ်ဖြင့် တွက်ချက်သည်။ ဗလာထားပါက ဤဆေးအတွက် သတိပေးချက် မရှိပါ။",
+  "invUnitsSection": "ယူနစ်များ",
+  "invAddUnit": "ယူနစ် ထည့်ရန်",
+  "invUnitsSectionHint": "အကြီးဆုံး အထုပ်ကို အရင် စဉ်ပါ။ ယူနစ်တစ်ခုသည် ၁ နှင့် ညီရမည် — ထိုယူနစ်ဖြင့်သာ လက်ကျန်ကို ရေတွက်သည်။",
+  "invUnitName": "ယူနစ်နာမည်",
+  "invUnitNameHint": "ဘူး / ဆေးထုပ် / ဆေးပြား / ဖန်ဘူး",
+  "invEquals": "ညီသည်",
+  "invHolds": "ပါဝင်သည်",
+  "invRemoveThisUnit": "ဤယူနစ်ကို ဖယ်ရှားရန်",
+  "invSmallestUnitNote": "အငယ်ဆုံးယူနစ် — လက်ကျန်အထုပ်များကို ဤယူနစ်ဖြင့်သာ ရေတွက်သည်။",
+  "invSaveChanges": "ပြင်ဆင်ချက်များ သိမ်းရန်",
+  "invSaveMedicine": "ဆေးကို သိမ်းရန်",
+  "invAddAtLeastOneUnit": "ယူနစ် အနည်းဆုံး တစ်ခု ထည့်သွင်းပါ။",
+  "invEveryUnitNeedsName": "ယူနစ်တိုင်းတွင် နာမည် လိုအပ်ပါသည်။",
+  "invUnitMustHoldWholePieces": "{unit} တွင် အငယ်ဆုံးယူနစ် အပြည့်အဝသာ ပါဝင်ရမည်။",
+  "@invUnitMustHoldWholePieces": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "invRetailPriceForUnit": "{unit} အတွက် လက်လီဈေးနှုန်း သတ်မှတ်ပါ။",
+  "@invRetailPriceForUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "invShowOnlyLowStock": "လက်ကျန်နည်းသည်များကိုသာ ပြရန်",
+  "invSearchHint": "ဆေးနာမည်၊ ဂျဲနရစ် သို့မဟုတ် ဘားကုဒ် ရှာရန်",
+  "invLowBadge": "နည်းနေ",
+  "invNoStockBadge": "လက်ကျန်မရှိ",
+  "invExpiringBadge": "{count, plural, other{{count} ခု သက်တမ်းကုန်နီး}}",
+  "@invExpiringBadge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "invShelfAt": "သိမ်းနေရာ - {shelf}",
+  "@invShelfAt": {
+    "placeholders": {
+      "shelf": {
+        "type": "String"
+      }
+    }
+  },
+  "invStockValueK": "လက်ကျန်တန်ဖိုး {money} K",
+  "@invStockValueK": {
+    "placeholders": {
+      "money": {
+        "type": "String"
+      }
+    }
+  },
+  "invNothingMatchesFilter": "ဤစစ်ထုတ်မှုနှင့် ကိုက်ညီသော ဆေး မတွေ့ပါ။",
+  "invClearSearchHint": "စာရင်းအပြည့်အဝ ပြန်မြင်ရန် ရှာဖွေမှုဘောက်ကို ရှင်းလင်းပါ။",
+  "invNoMedicinesYet": "ဆေးစာရင်း မထည့်ရသေးပါ။",
+  "invFirstMedicineHint": "ပထမဆုံး ဆေးကို ထည့်သွင်းပြီး ကုန်လက်ခံမှတ်တမ်း တင်၍ လက်ကျန် သိမ်းပါ။",
+  "invAskOwnerToAdd": "ဆေးများ ထည့်သွင်းပြီး ကုန်လက်ခံမှတ်တမ်း တင်ရန် ဆိုင်ရှင်ကို တောင်းဆိုပါ။",
+  "invInventoryReadFailed": "ကုန်ပစ္စည်းစာရင်းကို ဖတ်ရှု၍ မရနိုင်ပါ။",
+  "invPiecesFallback": "အလုံး",
+  "invNoStockRecordDelivery": "လက်ကျန် မရှိပါ။ အထုပ်များ ထည့်သွင်းရန် ကုန်လက်ခံမှတ်တမ်း တင်ပါ။",
+  "invBatchNumber": "အထုပ် {number}",
+  "@invBatchNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "invBatchCost": "ဝယ်ဈေး {price} K",
+  "@invBatchCost": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "invExpired": "သက်တမ်းကုန်ပြီး",
+  "invDaysLeft": "{count, plural, other{{count} ရက် ကျန်}}",
+  "@invDaysLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "invBatchTotals": "{batchCount, plural, other{အထုပ် {batchCount} ခု}} · လက်ကျန် {quantity}",
+  "@invBatchTotals": {
+    "placeholders": {
+      "batchCount": {
+        "type": "int"
+      },
+      "quantity": {
+        "type": "int"
+      }
+    }
+  },
+  "invBatchValuationNote": "တန်ဖိုးစုစုပေါင်း {value} ကျပ်။ သက်တမ်းအကုန်ဆုံးကို ဦးစားပေး ရောင်းချသည်။",
+  "@invBatchValuationNote": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "invNoUnitsConfigured": "ဤဆေးအတွက် ယူနစ်များ သတ်မှတ်ထားခြင်း မရှိပါ။ အငယ်ဆုံးယူနစ်ကို အနည်းဆုံး ထည့်သွင်းပါ။",
+  "invNoSmallestUnit": "အငယ်ဆုံးယူနစ် သတ်မှတ်ထားခြင်း မရှိပါ — ယူနစ်အားလုံးသည် ၁ ထက်ပိုသော အလုံးရေသို့ ပြောင်းလဲသည်။ အလုံးရေ ၁ နှင့်ညီသော ယူနစ်ကို ထပ်ထည့်ပါ။",
+  "invMoreThanOneSmallestUnit": "အငယ်ဆုံးယူနစ် တစ်ခုထက် ပို သတ်မှတ်ထားသည် ({names}) — တစ်ခုတည်းသာ လိုအပ်ပါသည်။",
+  "@invMoreThanOneSmallestUnit": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "invDuplicateUnitNames": "ဆေးတစ်ခုအတွင်း ယူနစ်နာမည်များ ကွဲပြားရမည်; ယူနစ်နှစ်ခု နာမည်တူနေပါသည်။",
+  "invUnknownUnit": "ဤဆေးအတွက် ယူနစ် \"{name}\" ကို မတွေ့ရှိရပါ။",
+  "@invUnknownUnit": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "invQuantityAtLeast1": "အရေအတွက်သည် အနည်းဆုံး ၁ ဖြစ်ရပါမည်၊ {value} ရရှိသည်။",
+  "@invQuantityAtLeast1": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "invQuantityNotNegative": "အရေအတွက်သည် အနှုတ်ဖြစ်၍ မရပါ၊ {value} ရရှိသည်။",
+  "@invQuantityNotNegative": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "invMedicineNameRequired": "ဆေးနာမည် မဖြစ်မနေ လိုအပ်ပါသည်။",
+  "invBarcodeTaken": "ဘားကုဒ် {barcode} သည် {medicine} တွင် အသုံးပြုပြီးဖြစ်သည်။",
+  "@invBarcodeTaken": {
+    "placeholders": {
+      "barcode": {
+        "type": "String"
+      },
+      "medicine": {
+        "type": "String"
+      }
+    }
+  },
+  "invMedicineStillHasStock": "ဤဆေးတွင် လက်ကျန်ရှိနေသေးပါသည်။ ဦးစွာ စွန့်ပစ်မှတ်တမ်း တင်ပါ သို့မဟုတ် လွှဲပြောင်းပါ။",
+  "invBatchRemovalTooLarge": "အထုပ် {batch} တွင် {remaining} ခုသာ ကျန်ရှိသဖြင့် {removal} ခုကို ဖယ်ရှား၍ မရပါ။",
+  "@invBatchRemovalTooLarge": {
+    "placeholders": {
+      "batch": {
+        "type": "String"
+      },
+      "remaining": {
+        "type": "int"
+      },
+      "removal": {
+        "type": "int"
+      }
+    }
+  },
+  "licenseTitle": "သင့် လိုင္စင္ကို ဖြင့္ပါ",
+  "licenseIntro": "သင့် ဆေးဆိုင် လိုင္စင္ႏွင့္အတူ ပံ့ပိုးထားသော ဖြင့္သော့ကို ထည့္သြင္းပါ။ ဤအဆင့္ကို တစ်ကြိမ်သာ လုပ်ဆောင်ရပါမည်။",
+  "licenseKeyLabel": "ဖြင့္သော့",
+  "licenseActivate": "ဖြင့္ရန္",
+  "licenseKeyRequired": "ဖြင့္သော့ကို ထည့္သြင္းပါ။",
+  "licenseActivationFailed": "ဖြင့္၍ မရပါ။",
+  "licenseStoredKeyInvalid": "သိမ္းဆည္းထားသော သော့ကို အတည္ျပဳ၍ မရပါ။",
+  "licenseKeyNotJwt": "သော့သည် JWT ပုံစံျဖစ္ရပါမည္ — အပိုင္း ၃ ခုကို ဝီသကၤတာ (.) ျဖင့္ ခြားထားရပါမည္။",
+  "licenseSignatureMismatch": "signature မကိုက္ညီပါ — သော့ကို မွားယြင္းစြာထည့္သြင္း၊ ေျပာင္းလဲထား၊ သို႔မဟုတ္ အျခား secret ျဖင့္ ထုတ္ျပန္ထားပါသည္။",
+  "licenseNoFeaturesClaim": "သော့တြင္ features အခ်က္အလက္ မပါဝင္ပါ။",
+  "licenseUnreadableExpiry": "သော့၏ သက္တမ္းကုန္ရက္ (exp) အခ်က္အလက္ကို ဖတ္၍ မရပါ။",
+  "licenseUnsupportedAlgorithm": "မေထာက္ပံ့ထားသော key algorithm - {algorithm}။",
+  "@licenseUnsupportedAlgorithm": {
+    "placeholders": {
+      "algorithm": {
+        "type": "String"
+      }
+    }
+  },
+  "licenseUnknownVendor": "\"{vendor}\" သည် မသိရသော ထုတ္ျပန္သူျဖစ္သည္။",
+  "@licenseUnknownVendor": {
+    "placeholders": {
+      "vendor": {
+        "type": "String"
+      }
+    }
+  },
+  "licenseKeyExpired": "သော့သည် {date} တြင္ သက္တမ္းကုန္သည္။",
+  "@licenseKeyExpired": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "licenseSegmentNotBase64": "{label} အပိုင္းသည္ base64url အစစ္အမွန္ မဟုတ္ပါ။",
+  "@licenseSegmentNotBase64": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "licenseSegmentNotJsonObject": "{label} အပိုင္းသည္ JSON object အျဖစ္ မကူးယူနိုင်ပါ။",
+  "@licenseSegmentNotJsonObject": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "licenseSegmentNotJson": "{label} အပိုင္းသည္ JSON အစစ္အမွန္ မဟုတ္ပါ။",
+  "@licenseSegmentNotJson": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "licenseSegmentNotUtf8": "{label} အပိုင္းသည္ UTF-8 အစစ္အမွန္ မဟုတ္ပါ။",
+  "@licenseSegmentNotUtf8": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "purchChooseSupplier": "ပေးသွင်းသူကို ရွေးချယ်ပါ",
+  "purchOwes": "ကျန်ငွေ {amount}",
+  "@purchOwes": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "purchSupplier": "ပေးသွင်းသူ",
+  "purchChooseExisting": "ရှိပြီးသားကို ရွေးချယ်ရန်",
+  "purchSelectedSupplier": "ရွေးချယ်ထားသည် (#{id})",
+  "@purchSelectedSupplier": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "purchOrNewSupplierName": "သို့မဟုတ် ပေးသွင်းသူအသစ် အမည်",
+  "purchEnterDifferentSupplier": "အခြားပေးသွင်းသူ ထည့်သွင်းရန်",
+  "purchInvoiceGrnNumber": "ဘောက်ချာ / GRN အမှတ် (မဖြစ်မနေမဟုတ်)",
+  "purchLines": "ပစ္စည်းစာရင်း",
+  "purchAddLine": "ပစ္စည်းအသစ် ထပ်ထည့်ရန်",
+  "purchSaveAndAddToStock": "သိမ်းဆည်းပြီး ဂိုထဲထည့်သွင်းရန်",
+  "purchWhichMedicineArrived": "မည်ဆေး ရောက်ရှိလာသနည်း။",
+  "purchAddMedicineFirst": "ဆေးကို ဦးစွာ ထည့်သွင်းပါ။",
+  "purchChooseMedicine": "ဆေး ရွေးချယ်ရန်",
+  "purchRemoveLine": "ပစ္စည်းအကြိတ်ကို ဖယ်ရှားရန်",
+  "purchBatchExpiryDate": "ဘက်ခ် သက်တမ်းကုန်ရက်",
+  "purchBatchNumber": "ဘက်ခ်အမှတ်",
+  "purchExpiry": "သက်တမ်းကုန်ရက်",
+  "purchUnit": "ယူနစ်",
+  "purchQty": "အရေအတွက်",
+  "purchCostPerUnit": "{unit}လျှင် ကုန်ကျငွေ",
+  "@purchCostPerUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "purchPiece": "တစ်ခု",
+  "purchAddsUnitsToStock": "ဂိုထဲသို့ {unit} {count} ယူနစ် ထပ်ထည့်မည်။",
+  "@purchAddsUnitsToStock": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "purchAddsPiecesToStock": "ဂိုထဲသို့ {count} ခု ထပ်ထည့်မည်။",
+  "@purchAddsPiecesToStock": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "purchInvoiceTotal": "ဘောက်ချာ စုစုပေါင်း",
+  "purchPaidNow": "ယခု ပေးငွေ",
+  "purchPaidNowHelper": "ကျန်ငွေကို ပေးသွင်းသူ၏ အကြွေးစာရင်းတွင် ထားလိုပါက ဗလာ (သို့) လျှော့ထည့်ပါ။",
+  "purchAddedToPayable": "အကြွေးစာရင်းတင်ငွေ",
+  "purchBalance": "ကျန်ငွေ",
+  "purchStockedIn": "ကျပ် {amount} တန်ဖိုး ကုန်လှောင်ပြီးပါပြီ",
+  "@purchStockedIn": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "purchLinesCount": "{count, plural, other{အကြိတ် {count}}}",
+  "@purchLinesCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "purchNewBatchesCount": "{count, plural, other{ဘက်ခ်အသစ် {count}}}",
+  "@purchNewBatchesCount": {
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "purchMergedIntoExisting": "ဘက်ခ် {count} ခုကို လက်ရှိဘက်ခ်ထဲ ပေါင်းထည့်ပြီး",
+  "@purchMergedIntoExisting": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "purchBalanceAdded": "ကျန်ငွေ ကျပ် {amount} ကို ပေးသွင်းသူအကြွေးစာရင်းသို့ တင်သွင်းပြီးပါပြီ။",
+  "@purchBalanceAdded": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "purchPaidInFull": "ငွေပြည့်ပေးဆောင်ပြီးဖြစ်သဖြင့် ပေးသွင်းသူအကြွေးစာရင်းသို့ မတင်သွင်းရပါ။",
+  "purchPickSupplierOrName": "ပေးသွင်းသူကို ရွေးချယ်ပါ သို့မဟုတ် အမည်အသစ် ရိုက်ထည့်ပါ။",
+  "purchLinePickMedicine": "အကြိတ် {number}: ဆေးကို ရွေးချယ်ပါ။",
+  "@purchLinePickMedicine": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "purchLineBatchNumber": "အကြိတ် {number}: ဘက်ခ်အမှတ်ကို သေတ္တာပေါ်တွင် ပါရှိပါသည်။",
+  "@purchLineBatchNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "purchLineExpiryDate": "အကြိတ် {number}: သက်တမ်းကုန်ရက် သတ်မှတ်ပါ။",
+  "@purchLineExpiryDate": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "purchLineQuantity": "အကြိတ် {number}: အရေအတွက် အနည်းဆုံး 1 ဖြစ်ရပါမည်။",
+  "@purchLineQuantity": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "purchLineCost": "အကြိတ် {number}: ကုန်ကျဈေး သတ်မှတ်ပါ။",
+  "@purchLineCost": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "purchPaidExceedsTotal": "ပေးငွေ {paid} သည် ဘောက်ချာတန်ဖိုး {total} ထက် ကျော်လွန်နေပါသည်။",
+  "@purchPaidExceedsTotal": {
+    "placeholders": {
+      "paid": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "purchSupplierNameRequired": "ပေးသွင်းသူအမည် မဖြစ်မနေ လိုအပ်ပါသည်။",
+  "purchPaymentMustBePositive": "ပေးငွေသည် သုညထက် ကြီးရပါမည်။",
+  "purchPaymentExceedsBalance": "ပေးငွေသည် ကျန်ငွေ ကျပ် {amount} ထက် ကျော်လွန်နေပါသည်။",
+  "@purchPaymentExceedsBalance": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "purchAddAtLeastOneLine": "ဆေးပစ္စည်းအကြိတ် အနည်းဆုံး 1 ထည့်သွင်းပါ။",
+  "purchDuplicateSaleUnit": "ဆေးတစ်ခုတည်းအတွက် တူညီသော ဘက်ခ် ({batch}) နှစ်ကြိမ် ပါရှိနေပါသည်။ အရေအတွက်များကို အကြိတ်တစ်ခုတည်းတွင် ပေါင်းထည့်ပါ။",
+  "@purchDuplicateSaleUnit": {
+    "placeholders": {
+      "batch": {
+        "type": "String"
+      }
+    }
+  },
+  "purchPaidNotNegative": "ပေးငွေပမာဏ အနှုတ်ကိန်း ဖြစ်၍မရပါ။",
+  "purchPaidExceedsInvoice": "ပေးငွေ {paid} သည် ဘောက်ချာ စုစုပေါင်း {total} ထက် ကျော်လွန်နေပါသည်။",
+  "@purchPaidExceedsInvoice": {
+    "placeholders": {
+      "paid": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "purchEveryLineNeedsBatch": "အကြိတ်တိုင်းတွင် ဘက်ခ်အမှတ် လိုအပ်ပါသည်။",
+  "purchQuantityAtLeast1": "အရေအတွက် အနည်းဆုံး 1 ဖြစ်ရပါမည်။",
+  "purchCostNotNegative": "ကုန်ကျဈေးနှုန်း အနှုတ်ကိန်း ဖြစ်၍မရပါ။",
+  "purchFactorAtLeast1": "ယူနစ်ပြောင်းကိန်းသည် 1 သို့မဟုတ် ထက်ပို ဖြစ်ရပါမည်။",
+  "purchBatchAlreadyExpired": "ဘက်ခ် {batch} သည် သက်တမ်းလွန်ပြီးဖြစ်ပါသည်။ လက်ခံခြင်းကို ငြင်းပယ်ပါ သို့မဟုတ် ဆုံးရှုံးမှုအဖြစ် မှတ်တမ်းတင်ပါ။",
+  "@purchBatchAlreadyExpired": {
+    "placeholders": {
+      "batch": {
+        "type": "String"
+      }
+    }
+  },
+  "purchSupplierDoesNotExist": "ပေးသွင်းသူ {id} မတည်ရှိပါ။",
+  "@purchSupplierDoesNotExist": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "reportTitleToday": "အစီရင်ခံစာများ — ယနေ့",
+  "reportSalesToday": "ယနေ့ ရောင်းအား",
+  "reportVoucherCount": "{count, plural, other{ရောင်းချလက်မှတ် {count} ခု}}",
+  "@reportVoucherCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reportNetProfit": "စုစုပေါင်းအမြတ်",
+  "reportNetProfitFormula": "ရောင်းအား − ကုန်စရိတ် − အသုံးစရိတ်",
+  "reportReceivable": "လက်ခံရရှိမည်ငွေ",
+  "reportReceivableCaption": "ဆေးဆိုင်မှ ရရှိမည့်ငွေ",
+  "reportPayable": "ပေးချေရမည်ငွေ",
+  "reportPayableCaption": "ဆေးဆိုင်မှ ပေးချေရမည့်ငွေ",
+  "reportLowStock": "လက်ကျန်နည်းပါး",
+  "reportLowStockEmpty": "ပြန်မှာယူရမည့်အဆင့်အောက် ရောက်နေသော ဆေးဝါးမရှိပါ။",
+  "reportExpiringWithinDays": "{days, plural, other{ရက် {days} ရက်အတွင်း သက်တမ်းကုန်မည့်}}",
+  "@reportExpiringWithinDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "reportExpiringEmpty": "ဤကာလအတွင်း သက်တမ်းကုန်သွားမည့် ဘက်ချ်မရှိပါ။",
+  "reportExpiredDaysAgo": "{days, plural, other{သက်တမ်း {days} ရက်က ကုန်ဆုံး}}",
+  "@reportExpiredDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "reportDaysLeft": "{days, plural, other{{days} ရက် ကျန်}}",
+  "@reportDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "reportBatchNumber": "ဘက်ချ် #{id}",
+  "@reportBatchNumber": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "reportProfitBuildTitle": "စုစုပေါင်းအမြတ် တွက်ချက်ပုံ",
+  "reportTotalSales": "စုစုပေါင်း ရောင်းအား",
+  "reportMinusCostOfGoods": "− ကုန်ပစ္စည်းစရိတ်",
+  "reportMinusExpenses": "− အသုံးစရိတ်",
+  "reportAndMoreCount": "…နှင့် နောက်ထပ် {count, plural, other{{count} ခု}}",
+  "@reportAndMoreCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dashDevLicenceTitle": "ဖွံ့ဖြိုးရေး လိုင်စင်သော့ကို အသုံးပြုနေသည်",
+  "dashDevLicenceBody": "ဤ build သည် သော့များကို repository တွင် ထည့်သွင်းထားသော နမူနာသော့ဖြင့် စစ်ဆေးနေပါသည်။ ဖောက်သည်သော့ ထုတ်ပေးမည့်အစား --dart-define=PHARMACY_LICENSE_SECRET=… ဖြင့် build လုပ်ပါ။",
+  "dashLicence": "လိုင်စင်",
+  "dashLicenceNamed": "လိုင်စင်: {client}",
+  "@dashLicenceNamed": {
+    "placeholders": {
+      "client": {
+        "type": "String"
+      }
+    }
+  },
+  "dashStatusLine": "အခြေအနေ: {status}",
+  "@dashStatusLine": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "dashExpiresLine": "သက်တမ်းကုန်ဆုံးရက်: {date}",
+  "@dashExpiresLine": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "dashModulesLine": "မော်ဂျူးများ: {modules}",
+  "@dashModulesLine": {
+    "placeholders": {
+      "modules": {
+        "type": "String"
+      }
+    }
+  },
+  "dashLicenceNever": "မရှိ (အပြီးသတ် လိုင်စင်)",
+  "dashStatusUnknown": "မသိရှိရ",
+  "dashStatusNotActivated": "လိုင်စင် မဖွင့်ရသေး",
+  "dashStatusActive": "တက်ကြွနေသည်",
+  "dashStatusInvalidKey": "သော့ မှားယွင်းနေသည်",
+  "dashStatusExpired": "သက်တမ်း ကုန်ဆုံးပြီ",
+  "dashYourAccess": "သင့်အသုံးပြုခွင့်",
+  "dashAccessCostVisible": "ကုန်ကျဈေးနှင့် အမြတ်အစွန်း အစီရင်ခံစာများကို သင့်အခန်းကဏ္ဍအတွက် ပြသထားသည်။",
+  "dashAccessCostHidden": "{role} အခန်းကဏ္ဍအတွက် ကုန်ကျဈေးနှင့် အမြတ်အစွန်း အစီရင်ခံစာများကို ဖျောက်ထားသည်။",
+  "@dashAccessCostHidden": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "dashPhase5Note": "အဆင့် ၅ — အကြွေးစာရင်းများ၊ အသုံးစရိတ်များ၊ နေ့စဉ်အမြတ်အစွန်း အစီရင်ခံစာများနှင့် လုံခြုံရေးကုဒ်ပြု database အရန်သိမ်းခြင်း။",
+  "dashLicenceExpiresInDays": "{days, plural, other{လိုင်စင် သက်တမ်း ရက် {days} ရက်အတွင်း ကုန်ဆုံးမည်}}",
+  "@dashLicenceExpiresInDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "dashLicenceExpiredDaysAgo": "{days, plural, other{လိုင်စင် သက်တမ်း {days} ရက်က ကုန်ဆုံးပြီ}}",
+  "@dashLicenceExpiredDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "dashLicenceRenewBody": "အက်ပ်ကို ဆက်လက်အသုံးပြုနိုင်ရန် ၎င်းမတိုင်မီ လိုင်စင်ပြန်လည်သုံးပါ။ သင့်ဒေတာသည် ဤစက်ထဲတွင်သာ ရှိနေမည်ဖြစ်ပြီး ဖွင့်သော့အသစ် ထည့်သွင်းပါက အသုံးပြုခွင့်ကို ချက်ချင်း ပြန်လည်ရရှိနိုင်ပါသည်။",
+  "notifChannelName": "သက်တမ်းကုန်နီး ကုန်ပစ္စည်း အသိပေးချက်များ",
+  "notifChannelDescription": "သက်တမ်းကုန်နီးနေသော ဘက်ချ်များအတွက် အသိပေးချက်များ",
+  "notifBatchExpiringSoon": "ဘက်ချ် သက်တမ်းကုန်နီးနေပါပြီ",
+  "notifExpiryBody": "{name} သည် {days, plural, other{ရက် {days} ရက်အတွင်း}} သက်တမ်းကုန်မည်ပါ။",
+  "@notifExpiryBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "notifUnknown": "အမည်မသိ",
+  "saleNoMatchesClearSearch": "ကိုက်ညီသော ပစ္စည်း မတွေ့ပါ။ ရှာဖွေမှုကို ရှင်းလင်းပြီး ပစ္စည်းစာရင်းကို ပြန်လည်ကြည့်ပါ။",
+  "saleNoUnitsSetBadge": "ယူနစ် သတ်မှတ်ထားခြင်း မရှိပါ",
+  "saleOneSellableUnit": "ဤပစ္စည်းတွင် ရောင်းချနိုင်သော ယူနစ် တစ်ခုတည်းသာ ရှိပါသည်။",
+  "saleSellAs": "{name} ကို ရောင်းမည့် ယူနစ်",
+  "@saleSellAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "saleDiscountOverSubtotal": "ကြားစုစုပေါင်းထက် ပိုများနေပါသည်",
+  "saleEnterNumber": "ဂဏန်း ထည့်သွင်းပါ",
+  "saleCartEmpty": "ဈေးတန်းထဲတွင် ပစ္စည်း မရှိပါ။",
+  "saleCartLines": "{count, plural, other{ပစ္စည်း {count} မျိုး}}",
+  "@saleCartLines": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "saleReceivedLabel": "ရရှိသောငွေ",
+  "saleChargeOnCredit": "အကြွေးအဖြစ် {amount} ကျပ် တင်ရန်",
+  "@saleChargeOnCredit": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "saleCompleteSale": "ရောင်းချမှု အပြီးသတ်ရန်",
+  "saleNoCustomersYet": "ဖောက်သည် မရှိသေးပါ။ {screen} တွင် ဖန်တီးပါ။",
+  "@saleNoCustomersYet": {
+    "placeholders": {
+      "screen": {
+        "type": "String"
+      }
+    }
+  },
+  "saleChargeThisSaleTo": "ဤရောင်းချမှု အကြွေးတင်မည့် ဖောက်သည်",
+  "saleDebtAndLimit": "အကြွေး {debt} · ကန့်သတ်ချက် {limit} ကျပ်",
+  "@saleDebtAndLimit": {
+    "placeholders": {
+      "debt": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "saleCash": "ငွေသား",
+  "saleBalanceOnCredit": "အကြွေးကျန်",
+  "saleChange": "ပြန်အမ်းငွေ",
+  "salePickACustomer": "ဖောက်သည် ရွေးချယ်ပါ",
+  "salePaidInFull": "ငွေပြည့်ရှင်းပြီး",
+  "saleCarriesBalance": "{name} ၏ အကြွေးကျန် ဖြစ်ပါမည်",
+  "@saleCarriesBalance": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "saleClear": "ရှင်းလင်းရန်",
+  "saleChoose": "ရွေးချယ်ရန်",
+  "saleConfirmedTitle": "ရောင်းချမှု ပြီးဆုံးပါပြီ",
+  "saleVoucherNumber": "ဘောက်ချာလက်မှတ် - {number}",
+  "@saleVoucherNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "saleTotalAmount": "စုစုပေါင်း {amount} ကျပ်",
+  "@saleTotalAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "saleChangeAmount": "ပြန်အမ်းငွေ {amount} ကျပ်",
+  "@saleChangeAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "saleOnCreditAmount": "အကြွေး {amount} ကျပ်",
+  "@saleOnCreditAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "saleNewSale": "ရောင်းချမှု အသစ်",
+  "saleVoucher": "ဘောက်ချာလက်မှတ်",
+  "saleVoucherReady": "ဘောက်ချာလက်မှတ် {file} အသင့်ဖြစ်ပါပြီ ({bytes} ဘိုက်)။ ပရင်တာ ချိတ်ဆက်မှုကို စက်ပေါ်တွင် စမ်းသပ်သည့် အဆင့်၌ ထည့်သွင်းဆောင်ရွက်ပါမည်။",
+  "@saleVoucherReady": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      },
+      "bytes": {
+        "type": "String"
+      }
+    }
+  },
+  "saleVoucherBuildFailed": "ဘောက်ချာလက်မှတ်ကို မဖန်တီးနိုင်ပါ - {error}",
+  "@saleVoucherBuildFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "saleCouldNotComplete": "ရောင်းချမှုကို ပြီးမြောက်အောင် မဆောင်ရွက်နိုင်ပါ - {error}",
+  "@saleCouldNotComplete": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "saleSessionExpired": "အကောင့်ဝင်မှု သက်တမ်း ကုန်ဆုံးနေပါသည် — ပြန်လည်ဝင်ရောက်ပြီး ရောင်းချပါ။",
+  "saleChooseCustomerForBalance": "အကြွေးကျန် ခံယူရန် ဖောက်သည်ကို ရွေးချယ်ပါ။",
+  "saleKpayFullPayment": "KPay ဖြင့် ရောင်းချပါက ကျသင့်ငွေကို အပြည့်အဝ ရှင်းထိပ်ရပါမည်။",
+  "saleStaff": "ဝန်ထမ်း",
+  "saleItemFallback": "ပစ္စည်း {id}",
+  "@saleItemFallback": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "saleCustomerNameRequired": "ဖောက်သည် အမည် လိုအပ်ပါသည်။",
+  "saleCreditLimitNotNegative": "အကြွေး ကန့်သတ်ချက်သည် အနှုတ်ဂဏန်း ဖြစ်၍ မရပါ။",
+  "salePaymentMustBePositive": "ငွေပေးချေမှုသည် သုညထက် ကြီးရပါမည်။",
+  "salePaymentExceedsBalance": "ပေးချေသောငွေသည် ကျန်ငွေ {balance} ကျပ်ထက် ကျော်လွန်နေပါသည်။",
+  "@salePaymentExceedsBalance": {
+    "placeholders": {
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
+  "saleCartIsEmpty": "ဈေးတန်းထဲတွင် ပစ္စည်း မရှိပါ။",
+  "saleDiscountNotNegative": "လျှော့ဈေးသည် အနှုတ်ဂဏန်း ဖြစ်၍ မရပါ။",
+  "saleReceivedNotNegative": "ရရှိသောငွေသည် အနှုတ်ဂဏန်း ဖြစ်၍ မရပါ။",
+  "saleDiscountExceedsSubtotal": "လျှော့ဈေး {discount} သည် ကြားစုစုပေါင်း {subtotal} ထက် ကျော်လွန်နေပါသည်။",
+  "@saleDiscountExceedsSubtotal": {
+    "placeholders": {
+      "discount": {
+        "type": "String"
+      },
+      "subtotal": {
+        "type": "String"
+      }
+    }
+  },
+  "saleBalanceNeedsCustomer": "မရှင်းဆဲ ငွေကျန်ရှိသော ရောင်းချမှုကို ဖောက်သည်တစ်ဦးအား အကြွေးတင်ရပါမည်။",
+  "salePartialPaymentNotKPay": "KPay ရောင်းချမှုအတွက် ငွေတစ်ပိုင်းတစ်စ ခံယူ၍ မရပါ။ ကျန်ငွေကို အကြွေးအဖြစ် မှတ်တမ်းတင်ပါ သို့မဟုတ် အပြည့်အဝ ငွေရှင်းထိပ်ပါ။",
+  "saleQuantityAtLeast1": "အရေအတွက်သည် အနည်းဆုံး ၁ ဖြစ်ရပါမည်။",
+  "saleUnitPriceNotNegative": "ယူနစ်ဈေးနှုန်းသည် အနှုတ်ဂဏန်း ဖြစ်၍ မရပါ။",
+  "saleFactorAtLeast1": "ယူနစ် ပြောင်းလဲမြှောက်ဖော်ကိန်းသည် ၁ သို့မဟုတ် ၎င်းထက် များရပါမည်။",
+  "saleLineMustNameUnit": "ရောင်းချစာကြောင်းတိုင်းတွင် ယူနစ်အမည် ပါဝင်ရပါမည်။",
+  "saleCustomerDoesNotExist": "ဖောက်သည် {id} မတည်ရှိပါ။",
+  "@saleCustomerDoesNotExist": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "saleCustomerNotActive": "{name} သည် အသုံးပြုနိုင်သော ဖောက်သည် မဟုတ်ပါ။",
+  "@saleCustomerNotActive": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "saleOverCreditLimit": "{name} ၏ အကြွေးကန့်သတ်ချက် ကျော်လွန်နေပါသည် — ဤရောင်းချမှုကြောင့် ကျန်ငွေ {projected} ဖြစ်ပြီး ကန့်သတ်ချက် {limit} ထက် ကျော်နေမည် ဖြစ်သည်။",
+  "@saleOverCreditLimit": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "projected": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "saleShortage": "လက်ကျန် မလုံလောက်ပါ — {requested} လိုအပ်သော်လည်း {available} သာ ရှိပါသည်။",
+  "@saleShortage": {
+    "placeholders": {
+      "requested": {
+        "type": "String"
+      },
+      "available": {
+        "type": "String"
+      }
+    }
+  },
+  "saleProductShortage": "{product} — လက်ကျန် {available} သာရှိပြီး {requested} လိုအပ်ပါသည်",
+  "@saleProductShortage": {
+    "placeholders": {
+      "product": {
+        "type": "String"
+      },
+      "available": {
+        "type": "String"
+      },
+      "requested": {
+        "type": "String"
+      }
+    }
+  },
+  "saleLineMinOneUnit": "ရောင်းချစာကြောင်းတိုင်းသည် အနည်းဆုံး အသေးဆုံးယူနစ် ၁ ခု ယူရပါမည်။",
+  "saleVoucherDateLabel": "ရက်စွဲ",
+  "saleVoucherCustomerLabel": "ဖောက်သည်",
+  "saleVoucherCashierLabel": "ငွေရှင်းသူ",
+  "saleVoucherTypeLabel": "အမျိုးအစား",
+  "saleVoucherBalanceDue": "ကျငွေ",
+  "saleVoucherItemHeader": "ပစ္စည်း",
+  "saleVoucherQtyHeader": "အရေအတွက်",
+  "saleVoucherPriceHeader": "ဈေးနှုန်း",
+  "saleVoucherThankYou": "ကျေးဇူးတင်ပါသည်။ ပြန်လည်အပ်နှံရန် ဤဘောက်ချာလက်မှတ်ကို သိမ်းဆည်းထားပါ။",
+  "saleVoucherShopName": "ဆေးဆိုင်"
 }

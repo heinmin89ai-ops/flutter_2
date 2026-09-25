@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../../core/money.dart';
 import '../application/unit_hierarchy.dart';
 
@@ -385,7 +386,7 @@ class InventoryRepository {
   }) async {
     final trimmedName = tradeName.trim();
     if (trimmedName.isEmpty) {
-      throw const MedicineConflictException('');
+      throw const MedicineConflictException.nameRequired();
     }
     // Validated before opening the transaction so a rejected form costs no work.
     UnitHierarchy.from([
@@ -403,8 +404,9 @@ class InventoryRepository {
     if (normalisedBarcode != null) {
       final clash = await findByBarcode(normalisedBarcode);
       if (clash != null) {
-        throw MedicineConflictException(
-          'Barcode $normalisedBarcode is already on ${clash.tradeName}.',
+        throw MedicineConflictException.barcodeTaken(
+          barcode: normalisedBarcode,
+          medicineName: clash.tradeName,
         );
       }
     }
@@ -464,7 +466,7 @@ class InventoryRepository {
     Value<int?> lowStockThreshold = const Value.absent(),
   }) async {
     if (tradeName != null && tradeName.trim().isEmpty) {
-      throw const MedicineConflictException('');
+      throw const MedicineConflictException.nameRequired();
     }
     // `write` with a where clause rather than `replace`: replace re-validates the
     // whole row and demands every required column, which a partial edit by
@@ -530,7 +532,9 @@ class InventoryRepository {
   }) async {
     if (!allowWithStock && await stockForMedicine(medicineId) > 0) {
       throw const MedicineInUseException(
-        'This medicine still has stock. Write it off or transfer it first.',
+        errorKey: 'invMedicineStillHasStock',
+        debugMessage:
+            'This medicine still has stock. Write it off or transfer it first.',
       );
     }
     await (_db.update(_db.medicines)..where((t) => t.id.equals(medicineId)))
@@ -559,8 +563,15 @@ class InventoryRepository {
     final next = batch.qtyInSmallestUnit + deltaInBase;
     if (next < 0) {
       throw MedicineInUseException(
-        'Only ${batch.qtyInSmallestUnit} left in batch ${batch.batchNumber}; '
-        'cannot remove ${-deltaInBase}.',
+        errorKey: 'invBatchRemovalTooLarge',
+        errorArgs: {
+          'batch': batch.batchNumber,
+          'remaining': '${batch.qtyInSmallestUnit}',
+          'removal': '${-deltaInBase}',
+        },
+        debugMessage:
+            'Only ${batch.qtyInSmallestUnit} left in batch ${batch.batchNumber}; '
+            'cannot remove ${-deltaInBase}.',
       );
     }
     await (_db.update(_db.medicineBatches)..where((t) => t.id.equals(batchId)))
@@ -705,24 +716,69 @@ class UnitPriceEdit {
   final Pya? wholesalePricePya;
 }
 
-class MedicineConflictException implements Exception {
-  const MedicineConflictException(this.detail);
+/// Thrown for medicine catalogue write conflicts (missing name, barcode clash).
+///
+/// An empty-name conflict carries [errorNameRequired]; use that key rather than
+/// inspecting [debugMessage].
+class MedicineConflictException implements LocalizedError {
+  const MedicineConflictException({
+    required this.errorKey,
+    required this.debugMessage,
+    this.errorArgs = const {},
+  });
 
-  final String detail;
+  /// The name-required flavour, thrown before any field is looked at.
+  const MedicineConflictException.nameRequired()
+    : errorKey = errorNameRequired,
+      debugMessage = 'A medicine name is required.',
+      errorArgs = const {};
+
+  /// Raised when another medicine already owns the scanned/typed barcode.
+  factory MedicineConflictException.barcodeTaken({
+    required String barcode,
+    required String medicineName,
+  }) => MedicineConflictException(
+    errorKey: 'invBarcodeTaken',
+    errorArgs: {'barcode': barcode, 'medicine': medicineName},
+    debugMessage:
+        'Barcode $barcode is already on ${medicineName.isEmpty ? "(unnamed)" : medicineName}.',
+  );
+
+  static const String errorNameRequired = 'invMedicineNameRequired';
 
   @override
-  String toString() => detail.isEmpty
-      ? 'A medicine name is required.'
-      : 'Medicine conflict: $detail';
+  final String errorKey;
+
+  @override
+  final Map<String, String> errorArgs;
+
+  @override
+  final String debugMessage;
+
+  @override
+  String toString() => errorKey == errorNameRequired
+      ? debugMessage
+      : 'Medicine conflict: $debugMessage';
 }
 
-class MedicineInUseException implements Exception {
-  const MedicineInUseException(this.message);
-
-  final String message;
+class MedicineInUseException implements LocalizedError {
+  const MedicineInUseException({
+    required this.errorKey,
+    required this.debugMessage,
+    this.errorArgs = const {},
+  });
 
   @override
-  String toString() => 'MedicineInUseException: $message';
+  final String errorKey;
+
+  @override
+  final Map<String, String> errorArgs;
+
+  @override
+  final String debugMessage;
+
+  @override
+  String toString() => 'MedicineInUseException: $debugMessage';
 }
 
 class _StockTotals {

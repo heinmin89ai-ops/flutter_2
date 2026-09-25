@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/tables/users.dart';
+import '../../../core/l10n/l10n_bridge.dart';
 import '../application/auth_providers.dart';
 
 /// First-run setup: create the initial Admin account.
@@ -26,6 +27,7 @@ class _SetupAdminScreenState extends ConsumerState<SetupAdminScreen> {
   bool _busy = false;
 
   static const int _minSecretLength = 6;
+  static const int _minUsernameLength = 3;
 
   @override
   void dispose() {
@@ -36,19 +38,30 @@ class _SetupAdminScreenState extends ConsumerState<SetupAdminScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = context.l10n;
     final username = _username.text.trim();
     final secret = _secret.text;
 
-    if (username.length < 3) {
-      setState(() => _error = 'Username must be at least 3 characters.');
+    if (username.length < _minUsernameLength) {
+      setState(
+        () => _error = l10n.message(
+          'authUsernameMinLength',
+          {'min': '$_minUsernameLength'},
+        ),
+      );
       return;
     }
     if (secret.length < _minSecretLength) {
-      setState(() => _error = 'Use at least $_minSecretLength characters.');
+      setState(
+        () => _error = l10n.message(
+          'authSecretMinLength',
+          {'min': '$_minSecretLength'},
+        ),
+      );
       return;
     }
     if (secret != _confirm.text) {
-      setState(() => _error = 'The two entries do not match.');
+      setState(() => _error = l10n.message('authPasswordMismatch'));
       return;
     }
 
@@ -66,13 +79,14 @@ class _SetupAdminScreenState extends ConsumerState<SetupAdminScreen> {
           .signIn(username: username, secret: secret);
     } on Object catch (e) {
       if (mounted) setState(() => _busy = false);
-      if (mounted) setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = context.l10n.describe(e));
       return;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -85,15 +99,13 @@ class _SetupAdminScreenState extends ConsumerState<SetupAdminScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Create the owner account',
+                    l10n.authSetupTitle,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'This account can see cost prices, edit stock and manage '
-                    'staff. Choose something you will remember — there is no '
-                    'server reset for an offline device.',
+                    l10n.authSetupBlurb,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
@@ -102,9 +114,9 @@ class _SetupAdminScreenState extends ConsumerState<SetupAdminScreen> {
                     controller: _username,
                     enabled: !_busy,
                     autocorrect: false,
-                    decoration: const InputDecoration(
-                      labelText: 'Username',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.authUsernameLabel,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -112,10 +124,12 @@ class _SetupAdminScreenState extends ConsumerState<SetupAdminScreen> {
                     controller: _secret,
                     enabled: !_busy,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'PIN or password',
-                      helperText: 'Minimum 6 characters',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.authSecretLabel,
+                      helperText: l10n.authSecretHelper(
+                        '$_minSecretLength',
+                      ),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -124,7 +138,7 @@ class _SetupAdminScreenState extends ConsumerState<SetupAdminScreen> {
                     enabled: !_busy,
                     obscureText: true,
                     decoration: InputDecoration(
-                      labelText: 'Confirm',
+                      labelText: l10n.authConfirmLabel,
                       border: const OutlineInputBorder(),
                       errorText: _error,
                     ),
@@ -133,7 +147,7 @@ class _SetupAdminScreenState extends ConsumerState<SetupAdminScreen> {
                   const SizedBox(height: 20),
                   FilledButton(
                     onPressed: _busy ? null : _submit,
-                    child: const Text('Create account'),
+                    child: Text(l10n.authCreateAccountButton),
                   ),
                 ],
               ),

@@ -8,6 +8,11 @@ import '../data/license_repository.dart';
 import 'jwt_decoder.dart';
 import 'key_codec.dart';
 
+/// Error key that marks a signature-valid-but-lapsed key. Used to branch the
+/// boot route between [LicenseStatus.expired] and [LicenseStatus.invalidKey]
+/// without string-matching the (now localised) message.
+const String _expiredKey = 'licenseKeyExpired';
+
 /// Boot state for Module 1.
 enum LicenseStatus {
   /// Not yet determined; [LicenseNotifier.load] has not completed.
@@ -33,6 +38,7 @@ class LicenseState {
     required this.status,
     this.features = const {},
     this.message,
+    this.messageArgs = const {},
     this.expiresAt,
     this.client,
   });
@@ -42,8 +48,12 @@ class LicenseState {
   /// Decoded module flags, e.g. `{'retail': true, 'credit': false}`.
   final Map<String, bool> features;
 
-  /// Human-readable reason when [status] is not [LicenseStatus.active].
+  /// Localisation key for the human-readable reason when [status] is not
+  /// [LicenseStatus.active]. Resolved at display via `l10n.message(...)`.
   final String? message;
+
+  /// Placeholder arguments for [message], e.g. `{'date': '2026-01-01'}`.
+  final Map<String, String> messageArgs;
 
   /// `exp` from the verified key, or `null` for a perpetual licence.
   final DateTime? expiresAt;
@@ -102,12 +112,13 @@ class LicenseNotifier extends Notifier<LicenseState> {
         .verifyStored(config.activationKey);
 
     if (!result.isValid) {
-      final reason = result.reason ?? 'Stored key could not be verified.';
+      final error = result.error;
       state = LicenseState(
-        status: reason.contains('expired')
+        status: error?.errorKey == _expiredKey
             ? LicenseStatus.expired
             : LicenseStatus.invalidKey,
-        message: reason,
+        message: error?.errorKey ?? 'licenseStoredKeyInvalid',
+        messageArgs: error?.errorArgs ?? const {},
       );
       return;
     }
@@ -129,10 +140,11 @@ class LicenseNotifier extends Notifier<LicenseState> {
       facts = ref.read(featureDecoderProvider).decode(activationKey);
     } on ActivationKeyException catch (e) {
       state = LicenseState(
-        status: e.message.contains('expired')
+        status: e.errorKey == _expiredKey
             ? LicenseStatus.expired
             : LicenseStatus.invalidKey,
-        message: e.message,
+        message: e.errorKey,
+        messageArgs: e.errorArgs,
       );
       return false;
     }

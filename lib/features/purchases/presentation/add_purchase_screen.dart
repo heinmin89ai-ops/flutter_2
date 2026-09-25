@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../../core/money.dart';
 import '../../../core/presentation/money_field.dart';
-import '../../../l10n/generated/app_localizations.dart';
 import '../../inventory/application/inventory_providers.dart';
 import '../../inventory/application/unit_hierarchy.dart';
 import '../application/purchase_providers.dart';
@@ -61,9 +61,9 @@ class _AddPurchaseScreenState extends ConsumerState<AddPurchaseScreen> {
         child: ListView(
           shrinkWrap: true,
           children: [
-            const ListTile(
-              leading: Icon(Icons.local_shipping_outlined),
-              title: Text('Choose a supplier'),
+            ListTile(
+              leading: const Icon(Icons.local_shipping_outlined),
+              title: Text(context.l10n.purchChooseSupplier),
             ),
             const Divider(height: 1),
             for (final supplier in suppliers)
@@ -78,7 +78,9 @@ class _AddPurchaseScreenState extends ConsumerState<AddPurchaseScreen> {
                 ),
                 trailing: supplier.currentPayable > 0
                     ? Text(
-                        'owes ${formatMoney(supplier.currentPayable)}',
+                        context.l10n.purchOwes(
+                          formatMoney(supplier.currentPayable),
+                        ),
                         style: Theme.of(context).textTheme.bodySmall,
                       )
                     : null,
@@ -152,7 +154,7 @@ class _AddPurchaseScreenState extends ConsumerState<AddPurchaseScreen> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = e.message;
+        _error = context.l10n.describe(e);
       });
     } on UnitConfigException catch (e) {
       if (!mounted) return;
@@ -164,60 +166,62 @@ class _AddPurchaseScreenState extends ConsumerState<AddPurchaseScreen> {
   }
 
   String? _validate() {
+    final l10n = context.l10n;
     final hasExisting = _supplierId != null;
     if (!hasExisting && _newSupplierName.text.trim().isEmpty) {
-      return 'Choose a supplier or type a new name.';
+      return l10n.purchPickSupplierOrName;
     }
-    if (_lines.isEmpty) return 'Add at least one medicine line.';
+    if (_lines.isEmpty) return l10n.purchAddAtLeastOneLine;
     for (var index = 0; index < _lines.length; index++) {
       final line = _lines[index];
-      final label = 'Line ${index + 1}';
-      if (line.medicineId == null) return '$label: pick a medicine.';
+      final label = '${index + 1}';
+      if (line.medicineId == null) return l10n.purchLinePickMedicine(label);
       if ((line.batchNumber ?? '').trim().isEmpty) {
-        return '$label: the batch number is printed on the carton.';
+        return l10n.purchLineBatchNumber(label);
       }
-      if (line.expiryDate == null) return '$label: set the expiry date.';
+      if (line.expiryDate == null) return l10n.purchLineExpiryDate(label);
       if (line.quantity == null || line.quantity! <= 0) {
-        return '$label: quantity must be at least 1.';
+        return l10n.purchLineQuantity(label);
       }
-      if (line.costPya == null) return '$label: set the cost price.';
+      if (line.costPya == null) return l10n.purchLineCost(label);
     }
     if (_paid > _total) {
-      return 'Paid ${formatMoney(_paid)} is more than the '
-          '${formatMoney(_total)} invoice.';
+      return l10n.purchPaidExceedsTotal(
+        formatMoney(_paid),
+        formatMoney(_total),
+      );
     }
     return null;
   }
 
   Future<void> _showReceipt(PurchaseReceipt receipt) async {
+    final l10n = context.l10n;
     final lines = receipt.lines.fold<Pya>(0, (sum, l) => sum + l.lineTotal);
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Stocked in ${formatMoney(lines)} kyat'),
+        title: Text(l10n.purchStockedIn(formatMoney(lines))),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${receipt.lines.length} line${receipt.lines.length == 1 ? '' : 's'} '
-              '· ${receipt.batchesCreated} new batch'
-              '${receipt.batchesCreated == 1 ? '' : 'es'}'
-              '${receipt.batchesMerged > 0 ? ' · ${receipt.batchesMerged} merged into an existing batch' : ''}',
+              '${l10n.purchLinesCount(receipt.lines.length)} '
+              '· ${l10n.purchNewBatchesCount(receipt.batchesCreated)}'
+              '${receipt.batchesMerged > 0 ? ' · ${l10n.purchMergedIntoExisting('${receipt.batchesMerged}')}' : ''}',
             ),
             const SizedBox(height: 8),
             Text(
               receipt.amountOwed > 0
-                  ? 'Balance of ${formatMoney(receipt.amountOwed)} kyat added to '
-                        'the supplier account.'
-                  : 'Paid in full — nothing added to the supplier account.',
+                  ? l10n.purchBalanceAdded(formatMoney(receipt.amountOwed))
+                  : l10n.purchPaidInFull,
             ),
           ],
         ),
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Done'),
+            child: Text(l10n.done),
           ),
         ],
       ),
@@ -227,12 +231,13 @@ class _AddPurchaseScreenState extends ConsumerState<AddPurchaseScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).recordDelivery)),
+      appBar: AppBar(title: Text(l10n.recordDelivery)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
         children: [
-          Text('Supplier', style: theme.textTheme.titleSmall),
+          Text(l10n.purchSupplier, style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -242,8 +247,8 @@ class _AddPurchaseScreenState extends ConsumerState<AddPurchaseScreen> {
                   icon: const Icon(Icons.search),
                   label: Text(
                     _supplierId == null
-                        ? 'Choose existing'
-                        : 'Selected (#$_supplierId)',
+                        ? l10n.purchChooseExisting
+                        : l10n.purchSelectedSupplier('$_supplierId'),
                   ),
                 ),
               ),
@@ -252,9 +257,9 @@ class _AddPurchaseScreenState extends ConsumerState<AddPurchaseScreen> {
                 child: TextField(
                   controller: _newSupplierName,
                   enabled: _supplierId == null,
-                  decoration: const InputDecoration(
-                    labelText: 'or new supplier name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.purchOrNewSupplierName,
+                    border: const OutlineInputBorder(),
                     isDense: true,
                   ),
                   onChanged: (_) {
@@ -267,14 +272,14 @@ class _AddPurchaseScreenState extends ConsumerState<AddPurchaseScreen> {
           if (_supplierId != null)
             TextButton(
               onPressed: () => setState(() => _supplierId = null),
-              child: const Text('Enter a different supplier'),
+              child: Text(l10n.purchEnterDifferentSupplier),
             ),
           const SizedBox(height: 12),
           TextField(
             controller: _referenceNo,
-            decoration: const InputDecoration(
-              labelText: 'Invoice / GRN number (optional)',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.purchInvoiceGrnNumber,
+              border: const OutlineInputBorder(),
               isDense: true,
             ),
           ),
@@ -282,12 +287,12 @@ class _AddPurchaseScreenState extends ConsumerState<AddPurchaseScreen> {
           Row(
             children: [
               Expanded(
-                child: Text('Lines', style: theme.textTheme.titleMedium),
+                child: Text(l10n.purchLines, style: theme.textTheme.titleMedium),
               ),
               TextButton.icon(
                 onPressed: _addLine,
                 icon: const Icon(Icons.add),
-                label: const Text('Add line'),
+                label: Text(l10n.purchAddLine),
               ),
             ],
           ),
@@ -327,7 +332,7 @@ class _AddPurchaseScreenState extends ConsumerState<AddPurchaseScreen> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text('Save and add to stock'),
+                : Text(l10n.purchSaveAndAddToStock),
           ),
         ),
       ),
@@ -441,7 +446,7 @@ class _PurchaseLineTileState extends ConsumerState<_PurchaseLineTile> {
           widget.row.expiryDate ?? DateTime(now.year + 1, now.month, 1),
       firstDate: now,
       lastDate: DateTime(now.year + 15),
-      helpText: 'Batch expiry date',
+      helpText: context.l10n.purchBatchExpiryDate,
     );
     if (picked == null) return;
     final startOfMonth = DateTime(picked.year, picked.month, 1);
@@ -462,6 +467,7 @@ class _PurchaseLineTileState extends ConsumerState<_PurchaseLineTile> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final row = widget.row;
     final units = row.availableUnits;
 
@@ -487,13 +493,13 @@ class _PurchaseLineTileState extends ConsumerState<_PurchaseLineTile> {
                     onPressed: _pickMedicine,
                     icon: const Icon(Icons.search, size: 18),
                     label: Text(
-                      row.tradeName ?? 'Choose medicine',
+                      row.tradeName ?? l10n.purchChooseMedicine,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Remove line',
+                  tooltip: l10n.purchRemoveLine,
                   onPressed: widget.onRemove,
                   icon: const Icon(Icons.close),
                 ),
@@ -512,9 +518,9 @@ class _PurchaseLineTileState extends ConsumerState<_PurchaseLineTile> {
                   widget.onChanged();
                 },
                 onChanged: (value) => row.batchNumber = value,
-                decoration: const InputDecoration(
-                  labelText: 'Batch number',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.purchBatchNumber,
+                  border: const OutlineInputBorder(),
                   isDense: true,
                 ),
               ),
@@ -527,7 +533,7 @@ class _PurchaseLineTileState extends ConsumerState<_PurchaseLineTile> {
                       icon: const Icon(Icons.event_outlined, size: 18),
                       label: Text(
                         row.expiryDate == null
-                            ? 'Expiry'
+                            ? l10n.purchExpiry
                             : _ymd(row.expiryDate!),
                       ),
                     ),
@@ -539,9 +545,9 @@ class _PurchaseLineTileState extends ConsumerState<_PurchaseLineTile> {
                       child: DropdownButtonFormField<UnitSpec>(
                         initialValue: row.unit,
                         isDense: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Unit',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: l10n.purchUnit,
+                          border: const OutlineInputBorder(),
                         ),
                         items: [
                           for (final unit in units)
@@ -575,7 +581,7 @@ class _PurchaseLineTileState extends ConsumerState<_PurchaseLineTile> {
                         widget.onChanged();
                       },
                       decoration: InputDecoration(
-                        labelText: 'Qty',
+                        labelText: l10n.purchQty,
                         suffixText: row.unit?.name ?? 'pcs',
                         border: const OutlineInputBorder(),
                         isDense: true,
@@ -585,8 +591,9 @@ class _PurchaseLineTileState extends ConsumerState<_PurchaseLineTile> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: MoneyField(
-                      label:
-                          'Cost per ${row.unit?.name.toLowerCase() ?? 'piece'}',
+                      label: l10n.purchCostPerUnit(
+                        row.unit?.name.toLowerCase() ?? l10n.purchPiece,
+                      ),
                       suffix: 'K',
                       onChanged: (value) {
                         row.costPya = value;
@@ -603,8 +610,10 @@ class _PurchaseLineTileState extends ConsumerState<_PurchaseLineTile> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    'Adds ${row.quantity! * row.unit!.factor} '
-                    '${row.unit!.name.toLowerCase()}s to stock.',
+                    l10n.purchAddsUnitsToStock(
+                      '${row.quantity! * row.unit!.factor}',
+                      row.unit!.name.toLowerCase(),
+                    ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.primary,
                     ),
@@ -614,7 +623,7 @@ class _PurchaseLineTileState extends ConsumerState<_PurchaseLineTile> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    'Adds ${row.quantity!} pieces to stock.',
+                    l10n.purchAddsPiecesToStock('${row.quantity!}'),
                     style: theme.textTheme.bodySmall,
                   ),
                 ),
@@ -637,13 +646,15 @@ class _MedicinePicker extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const ListTile(title: Text('Which medicine arrived?')),
+          ListTile(
+            title: Text(context.l10n.purchWhichMedicineArrived),
+          ),
           const Divider(height: 1),
           Flexible(
             child: medicines.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text('Add a medicine first.'),
+                ? Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(context.l10n.purchAddMedicineFirst),
                   )
                 : ListView.builder(
                     shrinkWrap: true,
@@ -678,6 +689,7 @@ class _Totals extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final paid = paidPya ?? 0;
     final balance = totalPya - paid;
     return Container(
@@ -691,7 +703,8 @@ class _Totals extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text('Invoice total', style: theme.textTheme.titleSmall),
+                child: Text(l10n.purchInvoiceTotal,
+                    style: theme.textTheme.titleSmall),
               ),
               Text(
                 '${formatMoney(totalPya)} K',
@@ -701,19 +714,17 @@ class _Totals extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           MoneyField(
-            label: 'Paid now',
+            label: l10n.purchPaidNow,
             suffix: 'K',
             onChanged: onPaid,
-            helper:
-                'Leave blank or short to put the balance on the supplier '
-                'account.',
+            helper: l10n.purchPaidNowHelper,
           ),
           const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: Text(
-                  balance > 0 ? 'Added to payable' : 'Balance',
+                  balance > 0 ? l10n.purchAddedToPayable : l10n.purchBalance,
                   style: theme.textTheme.bodyMedium,
                 ),
               ),

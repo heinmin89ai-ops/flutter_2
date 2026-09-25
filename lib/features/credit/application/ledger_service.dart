@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/tables/credit_transactions.dart';
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../../core/money.dart';
 
 /// The single writer for `credit_transactions`.
@@ -39,10 +40,9 @@ class LedgerService {
     DateTime? at,
   }) async {
     if (amountPya <= 0) {
-      throw ArgumentError.value(
-        amountPya,
-        'amountPya',
-        'A debt entry must be positive.',
+      throw CreditLedgerException(
+        errorKey: 'creditDebtEntryPositive',
+        debugMessage: 'A debt entry must be positive.',
       );
     }
     await _db
@@ -77,10 +77,9 @@ class LedgerService {
     DateTime? at,
   }) async {
     if (amountPya <= 0) {
-      throw ArgumentError.value(
-        amountPya,
-        'amountPya',
-        'A payment entry must be positive.',
+      throw CreditLedgerException(
+        errorKey: 'creditPaymentEntryPositive',
+        debugMessage: 'A payment entry must be positive.',
       );
     }
     await _db
@@ -192,4 +191,26 @@ class LedgerService {
     final trimmed = value?.trim();
     return (trimmed == null || trimmed.isEmpty) ? null : trimmed;
   }
+}
+
+/// A rejected ledger append, carrying a localisation key for the UI.
+///
+/// Extends [ArgumentError] so existing callers and tests that catch argument
+/// misuse keep working unchanged, while `l10n.describe(e)` renders the
+/// user-facing text wherever a localised context is available.
+class CreditLedgerException extends ArgumentError implements LocalizedError {
+  CreditLedgerException({
+    required this.errorKey,
+    this.errorArgs = const {},
+    required this.debugMessage,
+  }) : super(debugMessage);
+
+  @override
+  final String errorKey;
+
+  @override
+  final Map<String, String> errorArgs;
+
+  @override
+  final String debugMessage;
 }

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/tables/credit_transactions.dart';
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../../core/money.dart';
 import '../../credit/application/ledger_service.dart';
 import '../../inventory/data/inventory_repository.dart';
@@ -128,7 +129,10 @@ class PurchaseRepository {
   Future<Supplier> createSupplier(NewSupplier entry) async {
     final name = entry.name.trim();
     if (name.isEmpty) {
-      throw const PurchaseRejectException('Supplier name is required.');
+      throw const PurchaseRejectException(
+        'purchSupplierNameRequired',
+        'Supplier name is required.',
+      );
     }
     final existing = await _findSupplierByName(name);
     if (existing != null) return existing;
@@ -164,14 +168,19 @@ class PurchaseRepository {
     DateTime? at,
   }) async {
     if (amountPya <= 0) {
-      throw const PurchaseRejectException('Payment must be greater than zero.');
+      throw const PurchaseRejectException(
+        'purchPaymentMustBePositive',
+        'Payment must be greater than zero.',
+      );
     }
     await _db.transaction(() async {
       final supplier = await _requireSupplier(supplierId);
       if (amountPya > supplier.currentPayable) {
         throw PurchaseRejectException(
+          'purchPaymentExceedsBalance',
           'Payment exceeds the outstanding balance of '
           '${formatMoney(supplier.currentPayable)} kyat.',
+          errorArgs: {'amount': formatMoney(supplier.currentPayable)},
         );
       }
       await (_db.update(
@@ -223,7 +232,10 @@ class PurchaseRepository {
     DateTime? at,
   }) async {
     if (lines.isEmpty) {
-      throw const PurchaseRejectException('Add at least one medicine line.');
+      throw const PurchaseRejectException(
+        'purchAddAtLeastOneLine',
+        'Add at least one medicine line.',
+      );
     }
     // Checked before the transaction so an unknown supplier is a clear message
     // rather than the raw FOREIGN KEY failure SQLite would otherwise raise.
@@ -240,20 +252,30 @@ class PurchaseRepository {
           '|${_dayOnly(line.expiryDate).toIso8601String()}';
       if (!seen.add(key)) {
         throw PurchaseRejectException(
+          'purchDuplicateSaleUnit',
           'The same batch (${line.batchNumber}) appears twice for one medicine. '
           'Combine the quantities into a single line.',
+          errorArgs: {'batch': line.batchNumber},
         );
       }
     }
 
     final total = lines.fold<Pya>(0, (sum, l) => sum + l.lineTotalPya);
     if (paidAmountPya < 0) {
-      throw const PurchaseRejectException('Paid amount cannot be negative.');
+      throw const PurchaseRejectException(
+        'purchPaidNotNegative',
+        'Paid amount cannot be negative.',
+      );
     }
     if (paidAmountPya > total) {
       throw PurchaseRejectException(
+        'purchPaidExceedsInvoice',
         'Paid ${formatMoney(paidAmountPya)} exceeds the invoice total of '
         '${formatMoney(total)}.',
+        errorArgs: {
+          'paid': formatMoney(paidAmountPya),
+          'total': formatMoney(total),
+        },
       );
     }
     final owed = total - paidAmountPya;
@@ -489,23 +511,35 @@ class PurchaseRepository {
 
   void _validateLine(NewPurchaseLine line) {
     if (line.batchNumber.trim().isEmpty) {
-      throw const PurchaseRejectException('Every line needs a batch number.');
+      throw const PurchaseRejectException(
+        'purchEveryLineNeedsBatch',
+        'Every line needs a batch number.',
+      );
     }
     if (line.quantity <= 0) {
-      throw const PurchaseRejectException('Quantity must be at least 1.');
+      throw const PurchaseRejectException(
+        'purchQuantityAtLeast1',
+        'Quantity must be at least 1.',
+      );
     }
     if (line.costPricePya < 0) {
-      throw const PurchaseRejectException('Cost price cannot be negative.');
+      throw const PurchaseRejectException(
+        'purchCostNotNegative',
+        'Cost price cannot be negative.',
+      );
     }
     if (line.conversionFactor < 1) {
       throw const PurchaseRejectException(
+        'purchFactorAtLeast1',
         'Unit conversion factor must be 1 or more.',
       );
     }
     if (_dayOnly(line.expiryDate).isBefore(_dayOnly(DateTime.now()))) {
       throw PurchaseRejectException(
+        'purchBatchAlreadyExpired',
         'Batch ${line.batchNumber} is already expired. '
         'Refuse the delivery or record it as a write-off.',
+        errorArgs: {'batch': line.batchNumber},
       );
     }
   }
@@ -522,7 +556,11 @@ class PurchaseRepository {
   Future<Supplier> _requireSupplier(int id) async {
     final supplier = await supplierById(id);
     if (supplier == null) {
-      throw PurchaseRejectException('Supplier $id does not exist.');
+      throw PurchaseRejectException(
+        'purchSupplierDoesNotExist',
+        'Supplier $id does not exist.',
+        errorArgs: {'id': '$id'},
+      );
     }
     return supplier;
   }
@@ -533,13 +571,31 @@ class PurchaseRepository {
   }
 }
 
-class PurchaseRejectException implements Exception {
-  const PurchaseRejectException(this.message);
-
-  final String message;
+/// A rejected stock-in. Carries a `purch*` localisation key instead of
+/// user-facing text; [debugMessage] keeps the original English for logs and
+/// tests, and [message] stays as a deprecated alias for it.
+class PurchaseRejectException implements LocalizedError {
+  const PurchaseRejectException(
+    this.errorKey,
+    this.debugMessage, {
+    this.errorArgs = const {},
+  });
 
   @override
-  String toString() => 'PurchaseRejectException: $message';
+  final String errorKey;
+
+  @override
+  final Map<String, String> errorArgs;
+
+  @override
+  final String debugMessage;
+
+  /// English text, kept so callers and tests matching on the message still
+  /// work while the module finishes localising.
+  String get message => debugMessage;
+
+  @override
+  String toString() => 'PurchaseRejectException: $debugMessage';
 }
 
 DateTime _dayOnly(DateTime value) =>

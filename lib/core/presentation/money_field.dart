@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/l10n_bridge.dart';
 import '../money.dart';
 
 /// Text field whose value is a kyat amount typed by hand and read back as pya.
@@ -59,13 +60,15 @@ class _MoneyFieldState extends State<MoneyField> {
   void _parse(String raw) {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) {
-      setState(() => _error = widget.allowEmpty ? null : 'Required');
+      setState(
+        () => _error = widget.allowEmpty ? null : context.l10n.coreFieldRequired,
+      );
       widget.onChanged(null);
       return;
     }
     final pya = kyatToPya(trimmed);
     if (pya == null) {
-      setState(() => _error = 'Enter a number, up to two decimals');
+      setState(() => _error = context.l10n.coreMoneyFormatError);
       widget.onChanged(null);
       return;
     }

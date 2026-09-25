@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../inventory/application/inventory_providers.dart';
 import '../application/backup_providers.dart';
 import '../data/backup_service.dart';
@@ -55,13 +56,11 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   }
 
   Future<void> _createBackup() async {
+    final l10n = context.l10n;
     final passphrase = await _askPassphrase(
-      title: 'Encrypt backup',
-      confirmLabel: 'Create backup',
-      blurb:
-          'The database is zipped and encrypted with this passphrase '
-          '(AES-256-GCM). It is not stored anywhere — lose it and the backup '
-          'cannot be restored.',
+      title: l10n.backupEncryptTitle,
+      confirmLabel: l10n.backupCreateAction,
+      blurb: l10n.backupEncryptBlurb,
     );
     if (passphrase == null || passphrase.trim().isEmpty) return;
 
@@ -76,21 +75,23 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       if (!mounted) return;
       ref.read(inventoryRevisionProvider.notifier).bump();
       _showInfo(
-        'Backup saved',
-        '${file.path}\n\n'
-            'Unencrypted database size was '
-            '${_kilobytes(artifact.databaseBytes.length)}.',
+        l10n.backupSavedTitle,
+        l10n.backupSavedBody(
+          file.path,
+          _kilobytes(artifact.databaseBytes.length),
+        ),
       );
     } on BackupRejectException catch (e) {
-      if (mounted) _toast(e.message);
+      if (mounted) _toast(l10n.describe(e));
     } catch (e) {
-      if (mounted) _toast('Backup failed: $e');
+      if (mounted) _toast(l10n.backupFailedWithReason(l10n.describe(e)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _restoreBackup() async {
+    final l10n = context.l10n;
     final dir = await ref.read(backupDirectoryProvider.future);
     final candidates =
         dir
@@ -103,7 +104,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           ); // timestamped names sort newest-first
     if (!mounted) return;
     if (candidates.isEmpty) {
-      _toast('No backup files found in ${dir.path}.');
+      _toast(l10n.backupNoFilesFound(dir.path));
       return;
     }
 
@@ -113,7 +114,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         child: ListView(
           shrinkWrap: true,
           children: [
-            const ListTile(title: Text('Choose a backup to restore')),
+            ListTile(title: Text(context.l10n.backupChooseToRestore)),
             const Divider(height: 1),
             for (final f in candidates)
               ListTile(
@@ -139,15 +140,16 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   /// date and schema are shown on the confirm sheet for exactly the same reason:
   /// "restore this file" must be an informed decision.
   Future<void> _confirmAndRestore(Uint8List envelope) async {
+    final l10n = context.l10n;
     final service = ref.read(backupServiceProvider);
     // Captured synchronously before any await: the reopen callback must reach the
     // live ProviderContainer, and using `context` after the awaits below would be
     // reading a possibly-defunct element.
     final container = ProviderScope.containerOf(context);
     final passphrase = await _askPassphrase(
-      title: 'Unlock backup',
-      confirmLabel: 'Next',
-      blurb: 'Enter the passphrase this backup was encrypted with.',
+      title: l10n.backupUnlockTitle,
+      confirmLabel: l10n.backupNext,
+      blurb: l10n.backupUnlockBlurb,
     );
     if (passphrase == null) return;
 
@@ -158,20 +160,20 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       final go = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Replace everything with this backup?'),
+          title: Text(l10n.backupReplaceTitle),
           content: Text(
-            'From: ${_stamp(manifest.createdAt)}\n'
-            'Schema: v${manifest.schemaVersion}\n\n'
-            'The current live data will be overwritten. This cannot be undone.',
+            '${l10n.backupReplaceFrom(_stamp(manifest.createdAt))}\n'
+            '${l10n.backupReplaceSchema('v${manifest.schemaVersion}')}\n\n'
+            '${l10n.backupOverwriteWarning}',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Restore'),
+              child: Text(l10n.backupRestoreAction),
             ),
           ],
         ),
@@ -189,13 +191,13 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       );
       if (!mounted) return;
       ref.read(inventoryRevisionProvider.notifier).bump();
-      _showInfo('Restored', 'The app is now reading the backup’s data.');
+      _showInfo(l10n.backupRestoredTitle, l10n.backupRestoredBody);
     } on BackupAuthException catch (e) {
-      if (mounted) _toast(e.message);
+      if (mounted) _toast(l10n.describe(e));
     } on BackupFormatException catch (e) {
-      if (mounted) _toast(e.message);
+      if (mounted) _toast(l10n.describe(e));
     } catch (e) {
-      if (mounted) _toast('Restore failed: $e');
+      if (mounted) _toast(l10n.backupRestoreFailedWithReason(l10n.describe(e)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -209,36 +211,39 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     final controller = TextEditingController();
     return showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(blurb),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              obscureText: true,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Passphrase',
-                border: OutlineInputBorder(),
-                isDense: true,
+      builder: (context) {
+        final l10n = context.l10n;
+        return AlertDialog(
+          title: Text(title),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(blurb),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                obscureText: true,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: l10n.backupPassphrase,
+                  border: const OutlineInputBorder(),
+                  isDense: true,
+                ),
               ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: Text(confirmLabel),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: Text(confirmLabel),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -251,7 +256,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            child: Text(context.l10n.ok),
           ),
         ],
       ),
@@ -266,41 +271,37 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final mayManage = ref.watch(canManageBackupProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Backup & Restore')),
+      appBar: AppBar(title: Text(l10n.backupRestore)),
       body: !mayManage
-          ? const Center(
-              child: Text('Only an owner may back up or restore the database.'),
-            )
+          ? Center(child: Text(l10n.backupOwnerOnlyNote))
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
                 Text(
-                  'Backups are written to ${_dir?.path ?? 'the app’s Backups folder'}.',
+                  l10n.backupStorageNote(
+                    _dir?.path ?? l10n.backupFolderFallback,
+                  ),
                   style: theme.textTheme.bodySmall,
                 ),
                 const SizedBox(height: 16),
                 _ActionCard(
                   icon: Icons.cloud_download_outlined,
-                  title: 'Create an encrypted backup',
-                  body:
-                      'Snapshots the live database (VACUUM INTO, so it is '
-                      'consistent and WAL-free), zips it, and encrypts it with a '
-                      'passphrase you choose.',
-                  actionLabel: 'Create backup',
+                  title: l10n.backupCreateTitle,
+                  body: l10n.backupCreateBody,
+                  actionLabel: l10n.backupCreateAction,
                   onPressed: _busy ? null : _createBackup,
                 ),
                 const SizedBox(height: 12),
                 _ActionCard(
                   icon: Icons.cloud_upload_outlined,
-                  title: 'Restore from a backup',
-                  body:
-                      'Pick a .pbak file, unlock it, and replace the current '
-                      'database. Everything now on the device is overwritten.',
-                  actionLabel: 'Restore',
+                  title: l10n.backupRestoreTitle,
+                  body: l10n.backupRestoreBody,
+                  actionLabel: l10n.backupRestoreAction,
                   destructive: true,
                   onPressed: _busy ? null : _restoreBackup,
                 ),

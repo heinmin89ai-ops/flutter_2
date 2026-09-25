@@ -262,8 +262,8 @@ class _Grid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (entries.isEmpty) {
-      return const Center(
-        child: Text('Nothing matches. Clear the search to see the catalogue.'),
+      return Center(
+        child: Text(AppLocalizations.of(context).saleNoMatchesClearSearch),
       );
     }
     return GridView.builder(
@@ -297,7 +297,7 @@ class _ProductCard extends StatelessWidget {
     // chosen on the cart line, so this is the "from ___" anchor, not a quote.
     final headline = sellable
         ? '${formatMoney(hierarchy!.priceFor(unit: hierarchy.base, mode: SaleMode.retail))} K / ${hierarchy.base.name}'
-        : 'no units set';
+        : AppLocalizations.of(context).saleNoUnitsSetBadge;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -514,6 +514,7 @@ class _CartLineTile extends StatelessWidget {
   /// list is reconstructed from the line's own frozen fields, so the picker
   /// cannot offer a unit that was never priced onto the ticket.
   Future<void> _pickUnit(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     // The line carries only its current unit; the sibling units come from the
     // catalogue entry the screen resolved. We rebuild the switch options from
     // what the cart already knows is safe to sell, which is the whole point of
@@ -522,15 +523,13 @@ class _CartLineTile extends StatelessWidget {
     if (units.length < 2) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('This product has one sellable unit.')),
-        );
+        ..showSnackBar(SnackBar(content: Text(l10n.saleOneSellableUnit)));
       return;
     }
     final picked = await showDialog<UnitSpec>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: Text('Sell ${line.tradeName} as'),
+        title: Text(l10n.saleSellAs(line.tradeName)),
         children: [
           for (final u in units)
             SimpleDialogOption(
@@ -590,6 +589,7 @@ class _DiscountRowState extends ConsumerState<_DiscountRow> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return TextField(
       controller: _controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -598,10 +598,10 @@ class _DiscountRowState extends ConsumerState<_DiscountRow> {
         LengthLimitingTextInputFormatter(12),
       ],
       decoration: InputDecoration(
-        labelText: AppLocalizations.of(context).discount,
+        labelText: l10n.discount,
         suffixText: 'K',
         isDense: true,
-        errorText: widget.invalid ? 'More than the subtotal' : _error,
+        errorText: widget.invalid ? l10n.saleDiscountOverSubtotal : _error,
       ),
       onChanged: (raw) {
         final trimmed = raw.trim();
@@ -611,7 +611,7 @@ class _DiscountRowState extends ConsumerState<_DiscountRow> {
         }
         final pya = kyatToPya(trimmed);
         if (pya == null) {
-          setState(() => _error = 'Enter a number');
+          setState(() => _error = AppLocalizations.of(context).saleEnterNumber);
           return;
         }
         setState(() => _error = null);
@@ -639,7 +639,7 @@ class _Failure extends StatelessWidget {
             const SizedBox(height: 12),
             FilledButton.tonal(
               onPressed: onRetry,
-              child: const Text('Try again'),
+              child: Text(AppLocalizations.of(context).tryAgain),
             ),
           ],
         ),

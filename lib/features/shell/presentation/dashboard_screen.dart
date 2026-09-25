@@ -55,40 +55,34 @@ class DashboardScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           if (license.expiringSoon) _ExpiryBanner(license: license),
           if (kDebugMode && kUsingDevelopmentLicenseSecret)
-            const _Card(
+            _Card(
               icon: Icons.warning_amber_rounded,
               tone: CardTone.warning,
-              title: 'Development licence secret in use',
-              body:
-                  'This build verifies keys against the placeholder secret that '
-                  'is committed to the repository. Build with '
-                  '--dart-define=PHARMACY_LICENSE_SECRET=… before issuing a '
-                  'customer key.',
+              title: l10n.dashDevLicenceTitle,
+              body: l10n.dashDevLicenceBody,
             ),
           _Card(
             icon: Icons.workspace_premium_outlined,
             title: license.client == null
-                ? 'Licence'
-                : 'Licence: ${license.client}',
+                ? l10n.dashLicence
+                : l10n.dashLicenceNamed(license.client!),
             body:
-                'Status: ${license.status.name}\n'
-                'Expires: ${_expiryLabel(license.expiresAt)}\n'
-                'Modules: ${license.features.isEmpty ? '—' : license.features.keys.join(', ')}',
+                '${l10n.dashStatusLine(_statusLabel(l10n, license.status))}\n'
+                '${l10n.dashExpiresLine(_expiryLabel(l10n, license.expiresAt))}\n'
+                '${l10n.dashModulesLine(_modulesLabel(l10n, license.features))}',
           ),
           _Card(
             icon: Icons.lock_outline,
-            title: 'Your access',
+            title: l10n.dashYourAccess,
             body: maySeeCost
-                ? 'Cost prices and profit reports are visible to your role.'
-                : 'Cost prices and profit reports are hidden for the '
-                      '${user?.role.name ?? 'current'} role.',
+                ? l10n.dashAccessCostVisible
+                : l10n.dashAccessCostHidden(user?.role.name ?? 'current'),
           ),
           const SizedBox(height: 16),
           const _ModuleLinks(),
           const SizedBox(height: 8),
           Text(
-            'Phase 5 — credit ledgers, expenses, daily profit reports and '
-            'encrypted database backup.',
+            l10n.dashPhase5Note,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall,
           ),
@@ -97,8 +91,40 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  static String _expiryLabel(DateTime? expiry) => expiry == null
-      ? 'never (perpetual licence)'
+  static String _statusLabel(AppLocalizations l10n, LicenseStatus status) =>
+      switch (status) {
+        LicenseStatus.unknown => l10n.dashStatusUnknown,
+        LicenseStatus.notActivated => l10n.dashStatusNotActivated,
+        LicenseStatus.active => l10n.dashStatusActive,
+        LicenseStatus.invalidKey => l10n.dashStatusInvalidKey,
+        LicenseStatus.expired => l10n.dashStatusExpired,
+      };
+
+  /// Vendor keys carry free-form module names; known ones read from the same
+  /// localised labels used by the module links, unknown ones stay verbatim.
+  static String _moduleLabel(AppLocalizations l10n, String module) =>
+      switch (module) {
+        'retail' => l10n.retail,
+        'wholesale' => l10n.wholesale,
+        'pos' => l10n.pointOfSale,
+        'inventory' => l10n.inventory,
+        'credit' => l10n.customerCredit,
+        'expenses' => l10n.expenses,
+        'reports' => l10n.reports,
+        'backup' => l10n.backupRestore,
+        _ => module,
+      };
+
+  static String _modulesLabel(
+    AppLocalizations l10n,
+    Map<String, bool> features,
+  ) => features.isEmpty
+      ? '—'
+      : features.keys.map((m) => _moduleLabel(l10n, m)).join(', ');
+
+  static String _expiryLabel(AppLocalizations l10n, DateTime? expiry) =>
+      expiry == null
+      ? l10n.dashLicenceNever
       : expiry.toIso8601String().split('T').first;
 }
 
@@ -109,16 +135,15 @@ class _ExpiryBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final remaining = license.daysRemaining ?? 0;
     return _Card(
       icon: Icons.event_busy_outlined,
       tone: CardTone.warning,
       title: remaining >= 0
-          ? 'Licence expires in $remaining day${remaining == 1 ? '' : 's'}'
-          : 'Licence expired ${-remaining} day${remaining == -1 ? '' : 's'} ago',
-      body:
-          'Renew before then to keep using the app. Your data stays on this '
-          'device; entering a new activation key restores access immediately.',
+          ? l10n.dashLicenceExpiresInDays(remaining)
+          : l10n.dashLicenceExpiredDaysAgo(-remaining),
+      body: l10n.dashLicenceRenewBody,
     );
   }
 }

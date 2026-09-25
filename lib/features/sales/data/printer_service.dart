@@ -41,6 +41,77 @@ class ReceiptLine {
   final Pya lineTotalPya;
 }
 
+/// Every word the voucher prints, resolved by the caller.
+///
+/// This service has no `BuildContext` — it turns a completed sale into PDF bytes,
+/// not widgets — and the document is assembled after the sheet that owns the
+/// locale is gone. So the checkout screen builds these from `l10n.*` and hands
+/// them in, keeping the data layer free of a translation dependency exactly like
+/// [ReceiptLine] keeps it free of the catalogue join.
+///
+/// [VoucherLabels.english] is the default so a caller with no locale in hand (an
+/// export job, a test) still gets the wording this renderer shipped with.
+///
+/// Numbers and dates are deliberately not labels: they are formatted by
+/// [formatMoney] and [_formatDate] and stay identical across languages.
+class VoucherLabels {
+  const VoucherLabels({
+    required this.voucher,
+    required this.date,
+    required this.customer,
+    required this.cashier,
+    required this.type,
+    required this.subtotal,
+    required this.discount,
+    required this.total,
+    required this.cash,
+    required this.kpay,
+    required this.change,
+    required this.balanceDue,
+    required this.itemHeader,
+    required this.qtyHeader,
+    required this.priceHeader,
+    required this.thankYou,
+  });
+
+  /// The pre-localisation English wording, unchanged so an English voucher prints
+  /// exactly the bytes it printed before.
+  const VoucherLabels.english()
+    : voucher = 'Voucher',
+      date = 'Date',
+      customer = 'Customer',
+      cashier = 'Cashier',
+      type = 'Type',
+      subtotal = 'Subtotal',
+      discount = 'Discount',
+      total = 'Total',
+      cash = 'Cash',
+      kpay = 'KPay',
+      change = 'Change',
+      balanceDue = 'Balance due',
+      itemHeader = 'Item',
+      qtyHeader = 'Qty',
+      priceHeader = 'Price',
+      thankYou = 'Thank you. Keep this voucher for returns.';
+
+  final String voucher;
+  final String date;
+  final String customer;
+  final String cashier;
+  final String type;
+  final String subtotal;
+  final String discount;
+  final String total;
+  final String cash;
+  final String kpay;
+  final String change;
+  final String balanceDue;
+  final String itemHeader;
+  final String qtyHeader;
+  final String priceHeader;
+  final String thankYou;
+}
+
 /// Voucher printing (Phase 4 brief item 4).
 ///
 /// The brief allowed `blue_thermal_printer` **or** `pdf`; this builds on `pdf`
@@ -59,6 +130,12 @@ class ReceiptLine {
 /// The service only formats an already-completed sale. It never recomputes money:
 /// every figure comes off [SaleReceipt] and [ReceiptLine], so a voucher cannot
 /// print a total that disagrees with what the database stored.
+///
+/// **Known limit for Burmese vouchers.** With no `Font` set, `pdf` draws text with
+/// its built-in Helvetica, which has no Myanmar glyphs, so a [VoucherLabels] built
+/// from the `my` locale prints blanks. Fixing it means embedding a Myanmar-capable
+/// TTF and passing it as the page theme's `defaultFont` — a font-asset decision
+/// that belongs with the on-device printing pass, not with the wording.
 class PrinterService {
   const PrinterService();
 
@@ -77,6 +154,7 @@ class PrinterService {
     required SaleReceipt receipt,
     required List<ReceiptLine> lines,
     required String cashierName,
+    VoucherLabels labels = const VoucherLabels.english(),
     String shopName = 'Pharmacy',
     String? customerName,
   }) async {
@@ -100,29 +178,30 @@ class PrinterService {
               ),
             ),
             pw.SizedBox(height: 4),
-            _row('Voucher', sale.voucherNo),
-            _row('Date', _formatDate(sale.createdAt)),
-            if (customerName != null) _row('Customer', customerName),
-            _row('Cashier', cashierName),
-            _row('Type', _capitalise(sale.saleType)),
+            _row(labels.voucher, sale.voucherNo),
+            _row(labels.date, _formatDate(sale.createdAt)),
+            if (customerName != null) _row(labels.customer, customerName),
+            _row(labels.cashier, cashierName),
+            _row(labels.type, _capitalise(sale.saleType)),
             pw.Divider(),
-            _itemsTable(lines),
+            _itemsTable(lines, labels),
             pw.Divider(),
-            _amountRow('Subtotal', receipt.subtotalPya),
+            _amountRow(labels.subtotal, receipt.subtotalPya),
             if (receipt.discountPya > 0)
-              _amountRow('Discount', receipt.discountPya, negative: true),
-            _amountRow('Total', receipt.totalPya, bold: true),
+              _amountRow(labels.discount, receipt.discountPya, negative: true),
+            _amountRow(labels.total, receipt.totalPya, bold: true),
             _amountRow(
-              sale.paymentType == PaymentMethod.kpay.name ? 'KPay' : 'Cash',
+              sale.paymentType == PaymentMethod.kpay.name
+                  ? labels.kpay
+                  : labels.cash,
               sale.paidAmount,
             ),
-            if (receipt.changePya > 0) _amountRow('Change', receipt.changePya),
+            if (receipt.changePya > 0)
+              _amountRow(labels.change, receipt.changePya),
             if (receipt.creditPya > 0)
-              _amountRow('Balance due', receipt.creditPya),
+              _amountRow(labels.balanceDue, receipt.creditPya),
             pw.SizedBox(height: 6),
-            pw.Center(
-              child: pw.Text('Thank you. Keep this voucher for returns.'),
-            ),
+            pw.Center(child: pw.Text(labels.thankYou)),
           ],
         ),
       ),
@@ -166,7 +245,7 @@ class PrinterService {
     ),
   );
 
-  static pw.Widget _itemsTable(List<ReceiptLine> lines) {
+  static pw.Widget _itemsTable(List<ReceiptLine> lines, VoucherLabels labels) {
     // A fixed-column table so a long product name wraps within its cell instead
     // of pushing the price off the roll — the one layout mistake that reliably
     // truncates a real receipt.
@@ -179,7 +258,12 @@ class PrinterService {
       },
       children: [
         pw.TableRow(
-          children: [_th('Item'), _th('Qty'), _th('Price'), _th('Total')],
+          children: [
+            _th(labels.itemHeader),
+            _th(labels.qtyHeader),
+            _th(labels.priceHeader),
+            _th(labels.total),
+          ],
         ),
         for (final line in lines)
           pw.TableRow(

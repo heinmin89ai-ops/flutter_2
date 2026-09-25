@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/tables/credit_transactions.dart';
+import '../../../core/l10n/l10n_bridge.dart';
 import '../../../core/money.dart';
 import '../../credit/application/ledger_service.dart';
 
@@ -219,19 +220,29 @@ class CreditRepository {
     String? note,
   }) async {
     if (amountPya <= 0) {
-      throw const CreditRejectException('Payment must be greater than zero.');
+      throw const CreditRejectException(
+        errorKey: 'creditPaymentMustBePositive',
+        debugMessage: 'Payment must be greater than zero.',
+      );
     }
     await _db.transaction(() async {
       final customer = await (_db.select(
         _db.customers,
       )..where((t) => t.id.equals(customerId))).getSingleOrNull();
       if (customer == null) {
-        throw CreditRejectException('Customer $customerId does not exist.');
+        throw CreditRejectException(
+          errorKey: 'creditCustomerDoesNotExist',
+          errorArgs: {'id': '$customerId'},
+          debugMessage: 'Customer $customerId does not exist.',
+        );
       }
       if (amountPya > customer.currentDebt) {
         throw CreditRejectException(
-          'Payment exceeds the outstanding balance of '
-          '${formatMoney(customer.currentDebt)} kyat.',
+          errorKey: 'creditPaymentExceedsBalance',
+          errorArgs: {'amount': formatMoney(customer.currentDebt)},
+          debugMessage:
+              'Payment exceeds the outstanding balance of '
+              '${formatMoney(customer.currentDebt)} kyat.',
         );
       }
       await (_db.update(
@@ -259,19 +270,29 @@ class CreditRepository {
     String? note,
   }) async {
     if (amountPya <= 0) {
-      throw const CreditRejectException('Payment must be greater than zero.');
+      throw const CreditRejectException(
+        errorKey: 'creditPaymentMustBePositive',
+        debugMessage: 'Payment must be greater than zero.',
+      );
     }
     await _db.transaction(() async {
       final supplier = await (_db.select(
         _db.suppliers,
       )..where((t) => t.id.equals(supplierId))).getSingleOrNull();
       if (supplier == null) {
-        throw CreditRejectException('Supplier $supplierId does not exist.');
+        throw CreditRejectException(
+          errorKey: 'creditSupplierDoesNotExist',
+          errorArgs: {'id': '$supplierId'},
+          debugMessage: 'Supplier $supplierId does not exist.',
+        );
       }
       if (amountPya > supplier.currentPayable) {
         throw CreditRejectException(
-          'Payment exceeds the outstanding balance of '
-          '${formatMoney(supplier.currentPayable)} kyat.',
+          errorKey: 'creditPaymentExceedsBalance',
+          errorArgs: {'amount': formatMoney(supplier.currentPayable)},
+          debugMessage:
+              'Payment exceeds the outstanding balance of '
+              '${formatMoney(supplier.currentPayable)} kyat.',
         );
       }
       await (_db.update(
@@ -309,13 +330,16 @@ class CreditRepository {
       )..where((t) => t.id.equals(transactionId))).getSingleOrNull();
       if (row == null) {
         throw const CreditRejectException(
-          'That ledger entry no longer exists.',
+          errorKey: 'creditLedgerEntryMissing',
+          debugMessage: 'That ledger entry no longer exists.',
         );
       }
       if (row.kind != TransactionKind.paymentReceived) {
         throw const CreditRejectException(
-          'Only a recorded payment can be reversed; a debt is undone by '
-          'reversing its source sale or purchase.',
+          errorKey: 'creditOnlyPaymentReversible',
+          debugMessage:
+              'Only a recorded payment can be reversed; a debt is undone by '
+              'reversing its source sale or purchase.',
         );
       }
       if (row.partyType == PartyType.customer) {
@@ -381,11 +405,25 @@ class CreditRepository {
   }
 }
 
-class CreditRejectException implements Exception {
-  const CreditRejectException(this.message);
-
-  final String message;
+class CreditRejectException implements LocalizedError {
+  const CreditRejectException({
+    required this.errorKey,
+    this.errorArgs = const {},
+    required this.debugMessage,
+  });
 
   @override
-  String toString() => 'CreditRejectException: $message';
+  final String errorKey;
+
+  @override
+  final Map<String, String> errorArgs;
+
+  @override
+  final String debugMessage;
+
+  /// English log text, kept for existing test/assert call sites.
+  String get message => debugMessage;
+
+  @override
+  String toString() => 'CreditRejectException: $debugMessage';
 }

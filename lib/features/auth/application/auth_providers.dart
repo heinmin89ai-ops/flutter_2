@@ -26,7 +26,7 @@ class AuthNotifier extends Notifier<AppUser?> {
     final repo = ref.read(userRepositoryProvider);
     final outcome = await repo.authenticate(username: username, secret: secret);
     if (outcome != AuthOutcome.success) {
-      return AuthResult(outcome: outcome, message: _explain(outcome));
+      return AuthResult(outcome: outcome, messageKey: _messageKey(outcome));
     }
 
     // Re-read to get the row. Safe because the row cannot be deleted by anyone
@@ -35,7 +35,7 @@ class AuthNotifier extends Notifier<AppUser?> {
     if (user == null) {
       return const AuthResult(
         outcome: AuthOutcome.invalidCredentials,
-        message: 'Account not found. Try again.',
+        messageKey: 'authAccountNotFound',
       );
     }
 
@@ -57,19 +57,22 @@ class AuthNotifier extends Notifier<AppUser?> {
     await ref.read(secureStoreProvider).clearSession();
   }
 
-  static String _explain(AuthOutcome outcome) => switch (outcome) {
+  static String _messageKey(AuthOutcome outcome) => switch (outcome) {
     AuthOutcome.success => '',
-    AuthOutcome.invalidCredentials => 'Username or PIN is incorrect.',
-    AuthOutcome.inactive => 'This account has been disabled.',
+    AuthOutcome.invalidCredentials => 'authInvalidCredentials',
+    AuthOutcome.inactive => 'authAccountDisabled',
   };
 }
 
 class AuthResult {
-  const AuthResult({required this.outcome, this.user, this.message = ''});
+  const AuthResult({required this.outcome, this.user, this.messageKey = ''});
 
   final AuthOutcome outcome;
   final AppUser? user;
-  final String message;
+
+  /// Localisation key for the failure, resolved at display time via
+  /// `l10n.message(messageKey)`. Empty on success.
+  final String messageKey;
 
   bool get isSuccess => outcome == AuthOutcome.success;
 }
