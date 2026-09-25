@@ -240,13 +240,13 @@ void main() {
         key({'retail': true}, expiresAt: past),
       );
       expect(result.isValid, isFalse);
-      expect(result.reason, contains('expired'));
+      expect(result.error!.errorKey, 'licenseKeyExpired');
     });
 
     test('returns the reason for a forged key', () {
       final result = decoder().verifyStored('a.b.c');
       expect(result.isValid, isFalse);
-      expect(result.reason, isNotEmpty);
+      expect(result.error, isNotNull);
     });
   });
 
@@ -315,7 +315,7 @@ void main() {
 }
 
 Matcher _rejected(String fragment) => isA<ActivationKeyException>().having(
-  (e) => e.message,
+  (e) => e.debugMessage,
   'message',
   contains(fragment),
 );

@@ -19,7 +19,7 @@ class RecordingGateway implements NotificationGateway {
   int initCalls = 0;
 
   @override
-  Future<void> init() async => initCalls++;
+  Future<void> init({NotificationLabels? labels}) async => initCalls++;
 
   @override
   Future<void> showExpiryAlert({

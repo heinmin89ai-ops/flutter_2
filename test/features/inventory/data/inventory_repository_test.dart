@@ -592,7 +592,7 @@ void main() {
         () => repo.adjustBatch(batchId: id, deltaInBase: -11),
         throwsA(
           isA<MedicineInUseException>().having(
-            (e) => e.message,
+            (e) => e.debugMessage,
             'message',
             contains('B-77'),
           ),

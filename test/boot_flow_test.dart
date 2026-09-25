@@ -244,16 +244,16 @@ void main() {
 
       final auth = container.read(authProvider.notifier);
       expect(
-        (await auth.signIn(username: 'ghost', secret: 'long-enough')).message,
-        'Username or PIN is incorrect.',
+        (await auth.signIn(username: 'ghost', secret: 'long-enough')).messageKey,
+        'authInvalidCredentials',
       );
 
       await (db.update(db.users)..where((t) => t.id.equals(admin.id))).write(
         UsersCompanion(isActive: const Value(false)),
       );
       expect(
-        (await auth.signIn(username: 'owner', secret: 'long-enough')).message,
-        'This account has been disabled.',
+        (await auth.signIn(username: 'owner', secret: 'long-enough')).messageKey,
+        'authAccountDisabled',
       );
     });
   });
@@ -308,7 +308,7 @@ void main() {
       final state = container.read(licenseProvider);
       expect(state.status, LicenseStatus.expired);
       expect(state.isActivated, isFalse);
-      expect(state.message, contains('expired'));
+      expect(state.message, 'licenseKeyExpired');
     });
 
     test('a live key exposes expiry and client to the dashboard', () async {
