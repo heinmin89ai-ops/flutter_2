@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
+
 /// Camera barcode scanner screen.
 ///
 /// Returns the scanned barcode string via Navigator.pop, or null if the user
@@ -38,9 +40,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan Barcode'),
+        title: Text(l10n.scanBarcode),
         actions: [
           IconButton(
             icon: ValueListenableBuilder<MobileScannerState>(
@@ -58,6 +61,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 }
               },
             ),
+            tooltip: l10n.toggleTorch,
             onPressed: () => _controller.toggleTorch(),
           ),
         ],
@@ -78,9 +82,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'Position barcode within the frame',
-                  style: TextStyle(
+                Text(
+                  l10n.positionBarcodeInFrame,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                     backgroundColor: Colors.black54,

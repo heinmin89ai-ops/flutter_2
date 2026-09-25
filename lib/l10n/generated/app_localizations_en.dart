@@ -94,6 +94,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scanBarcode => 'Scan barcode';
 
   @override
+  String get recordDelivery => 'Record a delivery';
+
+  @override
+  String get positionBarcodeInFrame => 'Position barcode within the frame';
+
+  @override
+  String get toggleTorch => 'Toggle torch';
+
+  @override
   String noUnitsYet(String name) {
     return '$name has no units configured yet.';
   }

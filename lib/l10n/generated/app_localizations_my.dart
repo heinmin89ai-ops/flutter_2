@@ -94,6 +94,15 @@ class AppLocalizationsMy extends AppLocalizations {
   String get scanBarcode => 'ဘားကုဒ် စကင်ဖတ်ရန်';
 
   @override
+  String get recordDelivery => 'ကုန်လက်ခံမှတ်တမ်းတင်ရန်';
+
+  @override
+  String get positionBarcodeInFrame => 'ဘားကုဒ်ကို ဘောင်အတွင်း ထားပါ';
+
+  @override
+  String get toggleTorch => 'ဓာတ်မီး ဖွင့်/ပိတ်';
+
+  @override
   String noUnitsYet(String name) {
     return '$name အတွက် ယူနစ် သတ်မှတ်ထားခြင်း မရှိသေးပါ။';
   }

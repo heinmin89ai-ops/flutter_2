@@ -195,7 +195,7 @@ class _ModuleLinks extends ConsumerWidget {
       if (ref.watch(permissionProvider(Permission.managePurchases)))
         _Link(
           icon: Icons.local_shipping_outlined,
-          label: 'Record a delivery',
+          label: l10n.recordDelivery,
           target: AppRoutes.addPurchase,
         ),
       if (ref.watch(permissionProvider(Permission.manageCredit))) ...[

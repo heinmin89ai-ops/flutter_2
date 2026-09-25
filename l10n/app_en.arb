@@ -50,6 +50,9 @@
     }
   },
   "scanBarcode": "Scan barcode",
+  "recordDelivery": "Record a delivery",
+  "positionBarcodeInFrame": "Position barcode within the frame",
+  "toggleTorch": "Toggle torch",
   "noUnitsYet": "{name} has no units configured yet.",
   "@noUnitsYet": {
     "placeholders": {

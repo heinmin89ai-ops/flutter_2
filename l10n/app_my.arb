@@ -47,6 +47,9 @@
     }
   },
   "scanBarcode": "ဘားကုဒ် စကင်ဖတ်ရန်",
+  "recordDelivery": "ကုန်လက်ခံမှတ်တမ်းတင်ရန်",
+  "positionBarcodeInFrame": "ဘားကုဒ်ကို ဘောင်အတွင်း ထားပါ",
+  "toggleTorch": "ဓာတ်မီး ဖွင့်/ပိတ်",
   "noUnitsYet": "{name} အတွက် ယူနစ် သတ်မှတ်ထားခြင်း မရှိသေးပါ။",
   "@noUnitsYet": {
     "placeholders": {

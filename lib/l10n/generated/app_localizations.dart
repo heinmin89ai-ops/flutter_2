@@ -254,6 +254,24 @@ abstract class AppLocalizations {
   /// **'Scan barcode'**
   String get scanBarcode;
 
+  /// No description provided for @recordDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a delivery'**
+  String get recordDelivery;
+
+  /// No description provided for @positionBarcodeInFrame.
+  ///
+  /// In en, this message translates to:
+  /// **'Position barcode within the frame'**
+  String get positionBarcodeInFrame;
+
+  /// No description provided for @toggleTorch.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle torch'**
+  String get toggleTorch;
+
   /// No description provided for @noUnitsYet.
   ///
   /// In en, this message translates to:

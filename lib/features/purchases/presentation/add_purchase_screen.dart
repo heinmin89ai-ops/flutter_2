@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/money.dart';
 import '../../../core/presentation/money_field.dart';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../inventory/application/inventory_providers.dart';
 import '../../inventory/application/unit_hierarchy.dart';
 import '../application/purchase_providers.dart';
@@ -227,7 +228,7 @@ class _AddPurchaseScreenState extends ConsumerState<AddPurchaseScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Record a delivery')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).recordDelivery)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
         children: [
